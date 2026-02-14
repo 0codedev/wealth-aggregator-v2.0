@@ -1,6 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, LayoutDashboard, Wallet, Globe, Bot, Settings, X, Target, Zap, Brain, Users, User, Baby, Building2, Lightbulb, Layers } from 'lucide-react';
 import { useFamily } from '../../contexts/FamilyContext';
+import { motion } from 'framer-motion';
 
 interface SidebarProps {
     activeCategory: string;
@@ -37,9 +39,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     isCollapsed,
     onToggleCollapse
 }) => {
-    // const { activeEntity, setActiveEntity, getEntityName } = useFamily(); // Access from ProfileMenu now
-    // const [isFamilyMenuOpen, setIsFamilyMenuOpen] = useState(false);
-
     // Close mobile menu on route change
     useEffect(() => {
         setIsMobileMenuOpen(false);
@@ -53,13 +52,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                 title="Toggle Sidebar"
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 transition-transform duration-300 hover:scale-105">
-                        <TrendingUp className="text-white" size={20} />
+                    <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-1 ring-white/10 group-hover:scale-110 transition-transform">
+                        <div className="absolute inset-0 bg-white/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <TrendingUp className="text-white relative z-10" size={22} />
                     </div>
                     {!isCollapsed && (
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent animate-in fade-in slide-in-from-left-2 duration-300">
-                            WealthAgg
-                        </h1>
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                Wealth<span className="text-indigo-500">Agg</span>
+                            </h1>
+                            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Pro Dashboard</p>
+                        </div>
                     )}
                 </div>
                 <button
@@ -70,37 +73,68 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </button>
             </div>
 
-            {/* Entity Switcher Removed */}
+            <nav className="flex-1 px-3 space-y-1 mt-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                {CATEGORIES.map((cat) => {
+                    const isActive = activeCategory === cat.id;
+                    return (
+                        <button
+                            key={cat.id}
+                            onClick={() => setActiveCategory(cat.id)}
+                            className={`relative flex items-center gap-3 w-full p-3 rounded-xl transition-all duration-200 group ${isActive
+                                ? 'text-indigo-600 dark:text-white'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                                } ${isCollapsed ? 'justify-center' : ''}`}
+                        >
+                            {isActive && (
+                                <>
+                                    <motion.div
+                                        layoutId="sidebarActiveBubble"
+                                        className="absolute inset-0 bg-indigo-50 dark:bg-slate-800/80 rounded-xl z-0 shadow-sm"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                    <motion.div
+                                        layoutId="sidebarActiveTab"
+                                        className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-r-full z-10"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
+                                </>
+                            )}
 
-            <nav className="flex-1 px-4 space-y-2 mt-2">
-                {CATEGORIES.map((cat) => (
-                    <button
-                        key={cat.id}
-                        onClick={() => setActiveCategory(cat.id)}
-                        className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all ${activeCategory === cat.id
-                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
-                            } ${isCollapsed ? 'justify-center' : ''}`}
-                    >
-                        <cat.icon size={20} />
-                        {!isCollapsed && <span className="font-medium animate-in fade-in slide-in-from-left-2 duration-300">{cat.label}</span>}
-                    </button>
-                ))}
+                            <div className="relative z-10 flex items-center gap-3">
+                                <cat.icon size={20} className={`transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-slate-700 dark:group-hover:text-slate-300'}`} />
+
+                                {!isCollapsed && (
+                                    <span className={`font-medium text-sm whitespace-nowrap ${isActive ? 'font-semibold' : ''}`}>
+                                        {cat.label}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Hover Tooltip for Collapsed State */}
+                            {isCollapsed && (
+                                <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                                    {cat.label}
+                                </div>
+                            )}
+                        </button>
+                    )
+                })}
             </nav>
 
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-4 bg-slate-50/50 dark:bg-slate-900/50">
                 <button
                     onClick={onOpenSettings}
-                    className={`flex items-center gap-3 w-full p-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-all font-medium ${isCollapsed ? 'justify-center' : ''}`}
+                    className={`flex items-center gap-3 w-full p-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-all font-medium border border-transparent hover:border-slate-200 dark:hover:border-slate-700 ${isCollapsed ? 'justify-center' : ''}`}
                 >
                     <Settings size={20} />
-                    {!isCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">Settings & Data</span>}
+                    {!isCollapsed && <span>Settings</span>}
                 </button>
 
                 {!isCollapsed && (
-                    <div className="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <p className="text-xs text-slate-500 font-bold uppercase mb-1">Gross Worth</p>
-                        <p className="text-lg font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-emerald-500/10 to-transparent blur-xl" />
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mb-1 tracking-wider">Net Worth</p>
+                        <p className="text-xl font-mono font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors truncate">
                             {isPrivacyMode ? '••••••' : totalNetWorth}
                         </p>
                     </div>
