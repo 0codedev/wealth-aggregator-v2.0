@@ -55,25 +55,25 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             // Core React ecosystem - most stable, rarely changes
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            
+
             // State management and data
             'vendor-state': ['zustand', 'dexie'],
-            
+
             // Charts and visualization - large library, separate chunk
             'vendor-charts': ['recharts', 'lightweight-charts'],
-            
+
             // UI components and animations
             'vendor-ui': ['framer-motion', 'lucide-react', '@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
-            
+
             // Form handling and validation
             'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-            
+
             // Utilities and helpers
             'vendor-utils': ['date-fns', 'crypto-js'],
-            
+
             // Document generation
             'vendor-docs': ['jspdf', 'jspdf-autotable'],
-            
+
             // Google AI SDK - dynamic import already in code
             'vendor-ai': ['@google/genai'],
           },
@@ -90,12 +90,12 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './tests/setup.ts',
       css: true,
+      pool: 'threads',
       poolOptions: {
         threads: {
           singleThread: true
         }
       },
-      isolate: false,
     },
     // Optimize dependencies
     optimizeDeps: {
