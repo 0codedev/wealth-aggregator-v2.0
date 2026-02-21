@@ -38,8 +38,8 @@ export default defineConfig(({ mode }) => {
       })
     ],
     define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || '')
     },
     resolve: {
       alias: {
@@ -47,38 +47,6 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      // Increase chunk size warning limit
-      chunkSizeWarningLimit: 1000,
-      rollupOptions: {
-        output: {
-          // Enterprise-level code splitting strategy
-          manualChunks: {
-            // Core React ecosystem - most stable, rarely changes
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-
-            // State management and data
-            'vendor-state': ['zustand', 'dexie'],
-
-            // Charts and visualization - large library, separate chunk
-            'vendor-charts': ['recharts', 'lightweight-charts'],
-
-            // UI components and animations
-            'vendor-ui': ['framer-motion', 'lucide-react', '@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
-
-            // Form handling and validation
-            'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-
-            // Utilities and helpers
-            'vendor-utils': ['date-fns', 'crypto-js'],
-
-            // Document generation
-            'vendor-docs': ['jspdf', 'jspdf-autotable'],
-
-            // Google AI SDK - dynamic import already in code
-            'vendor-ai': ['@google/genai'],
-          },
-        },
-      },
       // Enable minification and tree-shaking
       minify: 'esbuild',
       sourcemap: mode === 'development',
