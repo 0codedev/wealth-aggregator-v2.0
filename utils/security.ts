@@ -136,28 +136,16 @@ export const securityHeaders = {
 };
 
 /**
- * Apply security headers to document
+ * Apply security headers to document.
+ * NOTE: CSP is already defined in index.html meta tags.
+ * Adding a second, more restrictive CSP at runtime was causing
+ * blank screen in production by blocking Tailwind CDN, inline scripts,
+ * and eval() needed by bundled code. This function is now a safe no-op.
  */
 export const applySecurityHeaders = (): void => {
-  // Create meta tags for CSP
-  const cspMeta = document.createElement('meta');
-  cspMeta.httpEquiv = 'Content-Security-Policy';
-  cspMeta.content = securityHeaders['Content-Security-Policy'];
-  document.head.appendChild(cspMeta);
-
-  // Add other security headers as meta tags
-  const headers = [
-    { name: 'X-Content-Type-Options', content: securityHeaders['X-Content-Type-Options'] },
-    { name: 'X-Frame-Options', content: securityHeaders['X-Frame-Options'] },
-    { name: 'Referrer-Policy', content: securityHeaders['Referrer-Policy'] }
-  ];
-
-  headers.forEach(header => {
-    const meta = document.createElement('meta');
-    meta.httpEquiv = header.name;
-    meta.content = header.content;
-    document.head.appendChild(meta);
-  });
+  // CSP is managed via index.html meta tag.
+  // Do NOT inject additional CSP meta tags at runtime as they
+  // create conflicts and silently break the application.
 };
 
 /**
