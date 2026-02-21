@@ -90,8 +90,73 @@ export const TotalPLWidget: React.FC<CommonWidgetProps & {
 };
 
 // ==========================================
-// 2. Top Performer Widget (Real Logic)
+// 1b. Total Holdings Widget (NEW KPI)
 // ==========================================
+
+export const TotalHoldingsWidget: React.FC<CommonWidgetProps & {
+    investments: Investment[];
+    stats: any;
+    isPrivacyMode: boolean;
+}> = ({ investments, stats, isPrivacyMode }) => {
+    const holdingsCount = investments?.length || 0;
+    const diversityScore = stats?.diversityScore || 0;
+
+    // Calculate unique platforms and asset classes
+    const uniquePlatforms = useMemo(() => {
+        if (!investments?.length) return 0;
+        return new Set(investments.map(i => i.platform)).size;
+    }, [investments]);
+
+    const uniqueAssetClasses = useMemo(() => {
+        if (!investments?.length) return 0;
+        return new Set(investments.map(i => i.type)).size;
+    }, [investments]);
+
+    return (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden group h-full flex flex-col justify-between">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Layers size={100} className="text-cyan-500" />
+            </div>
+
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-2">
+                    <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-500">
+                        <Layers size={20} />
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${diversityScore >= 70 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : diversityScore >= 40 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                        {diversityScore}% Diverse
+                    </span>
+                </div>
+
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-4">Total Holdings</p>
+                <div className="mt-1 text-3xl font-black text-white flex items-center gap-2 tracking-tight">
+                    {isPrivacyMode ? '••' : holdingsCount}
+                    <span className="text-base font-medium text-slate-500">investments</span>
+                </div>
+            </div>
+
+            <div className="relative z-10 mt-6 pt-4 border-t border-slate-800">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Platforms</p>
+                        <p className="text-sm font-bold text-slate-300 font-mono">{isPrivacyMode ? '•' : uniquePlatforms}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Asset Classes</p>
+                        <p className="text-sm font-bold text-white font-mono">{isPrivacyMode ? '•' : uniqueAssetClasses}</p>
+                    </div>
+                </div>
+                {/* Diversity Score Bar */}
+                <div className="w-full h-1.5 bg-slate-800 rounded-full mt-3 overflow-hidden">
+                    <div
+                        className={`h-full ${diversityScore >= 70 ? 'bg-emerald-500' : diversityScore >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                        style={{ width: `${Math.min(100, diversityScore)}%` }}
+                    ></div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export const TopPerformerWidget: React.FC<CommonWidgetProps & {
     stats: any;

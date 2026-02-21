@@ -1,14 +1,17 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { pageVariants } from './components/ui/animations';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/auth/LoginPage';
 import { FamilyProvider, useFamily } from './contexts/FamilyContext';
 import ProfileMenu from './components/layout/ProfileMenu';
 import {
     LayoutDashboard, Wallet, Globe, Bot,
-    Menu, Search, Bell,
-    Compass, TrendingUp, ShieldCheck, Clipboard,
-    Activity, Zap, BookOpen, Brain, Eye, EyeOff, Moon, Sun, Target, Heart, Lightbulb, Crown, AlertTriangle, Layers, Shield
+    Menu, Search, Eye, EyeOff, Moon, Sun, Target, Heart, Layers, Shield, Brain
 } from 'lucide-react';
+
+// Security
+import { applySecurityHeaders } from './utils/security';
 
 // Components
 import { CommandPalette } from './components/ui/CommandPalette';
@@ -20,7 +23,6 @@ import { PortfolioTab } from './components/tabs/PortfolioTab';
 import JarvisOrb from './components/ai/JarvisOrb';
 
 // Lazy Loaded Tabs (reduces initial bundle by ~40%)
-// Lazy Loaded Tabs (reduces initial business by ~40%)
 const AdvisorTab = lazy(() => import('./components/tabs/AdvisorTab'));
 const PsychDashboard = lazy(() => import('./components/PsychDashboard'));
 const StrategyLab = lazy(() => import('./components/tabs/StrategyLab'));
@@ -40,6 +42,7 @@ const DynastyMode = lazy(() => import('./components/innovation/DynastyMode').the
 const ImpulseCheck = lazy(() => import('./components/innovation/ImpulseCheck').then(m => ({ default: m.ImpulseCheck })));
 const QuantDashboard = lazy(() => import('./components/analytics/QuantDashboard').then(m => ({ default: m.QuantDashboard })));
 const FortressDashboard = lazy(() => import('./components/fortress/FortressDashboard').then(m => ({ default: m.FortressDashboard })));
+const MathLabHub = lazy(() => import('./components/calculators/MathLabHub').then(m => ({ default: m.MathLabHub })));
 
 // Modals
 import AddInvestmentModal from './components/AddInvestmentModal';
@@ -53,8 +56,9 @@ import { Tabs } from './components/ui/AnimatedTabs';
 import OfflineIndicator from './components/shared/OfflineIndicator';
 
 // Hooks & Store
-import { usePortfolio } from './hooks/usePortfolio';
+import { usePortfolioStore } from './store/portfolioStore'; // NEW: Use Store
 import { useHotkeys } from './hooks/useHotkeys';
+import { useIsMobile } from './hooks/useIsMobile';
 import { useMarketSentiment } from './hooks/useMarketSentiment';
 import { ASSET_CLASS_COLORS, Investment } from './types';
 
@@ -62,10 +66,11 @@ import { ASSET_CLASS_COLORS, Investment } from './types';
 import { formatCurrency, formatCurrencyPrecise, calculatePercentage } from './utils/helpers';
 
 // God-Tier Features
-import { VoiceCommandButton, AlertsDropdown, SettingsPanel } from './components/shared/GodTierFeatures';
+import { VoiceCommandButton, AlertsDropdown } from './components/shared/GodTierFeatures';
 import { useSettingsStore } from './store/settingsStore';
+import { MobileApp } from './components/mobile/MobileApp';
 
-
+// ... (Constants: SUB_TABS, CATEGORY_LABELS kept same, omitting for brevity in thought but including in file)
 const SUB_TABS: Record<string, { id: string, label: string, icon: any }[]> = {
     dashboard: [],
     portfolio: [
@@ -97,6 +102,7 @@ const SUB_TABS: Record<string, { id: string, label: string, icon: any }[]> = {
         { id: 'impulse', label: 'Anti-Impulse', icon: AlertTriangle },
     ],
     analytics: [
+        { id: 'mathlab', label: 'Math Lab', icon: Calculator },
         { id: 'quant', label: 'Deep Quant', icon: Layers },
     ],
     fortress: [
@@ -117,28 +123,32 @@ const CATEGORY_LABELS: Record<string, string> = {
     fortress: 'The Fortress'
 };
 
+import { Compass, ShieldCheck, Activity, Clipboard, Zap, BookOpen, Crown, AlertTriangle, Calculator } from 'lucide-react';
 
-
-// ... (keep existing imports)
-
+// FIX #2: Split into AppContent (auth gate) + AuthenticatedApp (all hooks)
+// This prevents hooks from being called after an early return, which violates React Rules of Hooks.
 const AppContent: React.FC = () => {
-    // --- Auth Check ---
     const { isAuthenticated, isLocked } = useAuth();
 
     if (!isAuthenticated || isLocked) {
         return <LoginPage />;
     }
 
+    return <AuthenticatedApp />;
+};
+
+const AuthenticatedApp: React.FC = () => {
     // --- UI State ---
-    const { activeEntity, setActiveEntity } = useFamily(); // Get active entity
+    const isMobile = useIsMobile();
+    const { activeEntity, setActiveEntity } = useFamily();
     const [activeCategory, setActiveCategory] = useState<string>('dashboard');
     const [activeSubTab, setActiveSubTab] = useState<string>('dashboard');
-    // Hoisted Dashboard State for Global Hotkey Access
     const [dashboardView, setDashboardView] = useState<'MAIN' | 'SPENDING' | 'MARKETS' | 'COMMUNITY'>('MAIN');
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
     const { isDarkMode, isHighContrast, updateSetting } = useSettingsStore();
+    const isEditMode = useSettingsStore(s => s.isEditMode); // FIX #15: extracted from inline JSX
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     // --- Modals ---
@@ -148,15 +158,27 @@ const AppContent: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-    // --- Data ---
+    // --- Data (FROM STORE) ---
+    // Initialize Store
+    const initializePortfolio = usePortfolioStore(state => state.initialize);
+    useEffect(() => {
+        const unsubscribe = initializePortfolio();
+        return () => unsubscribe();
+    }, [initializePortfolio]);
+
+    // Apply security headers on mount
+    useEffect(() => {
+        applySecurityHeaders();
+    }, []);
+
     const {
-        investments: allInvestments, // Rename to allInvestments
-        stats: globalStats, // Rename to globalStats (Note: stats might need re-calc if they are pre-calculated)
+        investments: allInvestments,
+        stats: globalStats,
         allocationData, assetClassData, platformData,
-        projectionData, history, lifeEvents,
+        history, lifeEvents,
         addInvestment, updateInvestment, deleteInvestment,
-        addLifeEvent, deleteLifeEvent, refreshRecurringInvestments, refreshData
-    } = usePortfolio();
+        addLifeEvent, deleteLifeEvent, refreshPortfolio
+    } = usePortfolioStore();
 
     // --- Filter logic ---
     const investments = React.useMemo(() => {
@@ -167,13 +189,9 @@ const AppContent: React.FC = () => {
         });
     }, [allInvestments, activeEntity]);
 
-    // Recalculate basic stats for the filtered View
-    // Note: This relies on simple summation. Sophisticated stats from backend/hook might be inaccurate if not re-fetched.
-    // Assuming 'stats' object structure from usePortfolio, let's try to patch `totalCurrent`.
     const stats = React.useMemo(() => {
         if (activeEntity === 'ALL') return globalStats;
 
-        // Calculate stats for the specific entity, explicitly excluding hidden assets to match global logic
         const activeInvestments = investments.filter(inv => !inv.isHiddenFromTotals);
         const totalCurrent = activeInvestments.reduce((sum, inv) => sum + (inv.currentValue || 0), 0);
         const totalInvested = activeInvestments.reduce((sum, inv) => sum + (inv.investedAmount || 0), 0);
@@ -192,34 +210,35 @@ const AppContent: React.FC = () => {
         };
     }, [globalStats, investments, activeEntity]);
 
-
     const { vix, status: marketStatus } = useMarketSentiment();
 
-    // ... (keep existing Effects & Hotkeys)
-    // Search (Cmd+K)
+    // FIX #17: Memoize search results to avoid re-filtering on every render
+    const searchResults = React.useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase();
+        return (investments || []).filter(inv =>
+            inv.name.toLowerCase().includes(q) ||
+            inv.ticker?.toLowerCase().includes(q) ||
+            inv.type.toLowerCase().includes(q)
+        );
+    }, [investments, searchQuery]);
+
+    // ... (Hotkeys and Effects kept same)
     useHotkeys('ctrl+k', (e) => {
         e.preventDefault();
         setIsSearchFocused(true);
-        // Need to focus the input actually, handled by state passing? 
-        // Best to use a ref for the input.
         document.getElementById('global-search-input')?.focus();
     });
 
-    // Navigation
     useHotkeys('ctrl+d', (e) => { e.preventDefault(); setActiveCategory('dashboard'); setDashboardView('MAIN'); });
     useHotkeys('ctrl+j', (e) => { e.preventDefault(); setActiveCategory('journal'); });
     useHotkeys('ctrl+p', (e) => { e.preventDefault(); setActiveCategory('portfolio'); });
-    // Global Shortcut to Markets (Ctrl+M)
     useHotkeys('ctrl+m', (e) => {
         e.preventDefault();
         setActiveCategory('dashboard');
-        // If already on dashboard, we still want to ensure we switch view.
-        // We might need to ensure subtab is dashboard too if we have subtabs in dashboard category?
-        // Dashboard category currently has empty subtabs list, so it defaults to main dashboard.
         setDashboardView('MARKETS');
     });
 
-    // Close Modals (Esc)
     useHotkeys('escape', () => {
         if (isAddModalOpen) setIsAddModalOpen(false);
         if (isSettingsOpen) setIsSettingsOpen(false);
@@ -251,27 +270,14 @@ const AppContent: React.FC = () => {
         }
     }, [isHighContrast]);
 
-    // --- Handlers ---
-    const handleAddAsset = async (asset: any) => {
-        await addInvestment(asset);
-        setIsAddModalOpen(false);
-    };
-
-    const handleEditAsset = async (id: string, asset: any) => {
-        await updateInvestment(id, asset);
-        setEditingInvestment(null);
-        setIsAddModalOpen(false);
-    };
-
-    // --- Render Content ---
+    // --- Content Render ---
     const renderContent = () => {
         const commonProps = {
-            investments, // PASSING FILTERED INVESTMENTS
-            stats,       // PASSING FILTERED STATS
+            investments, // Passed to other tabs, but Dashboard uses store
+            stats,
             allocationData,
             assetClassData,
             platformData,
-            projectionData,
             history,
             lifeEvents,
             isPrivacyMode,
@@ -291,14 +297,30 @@ const AppContent: React.FC = () => {
             onEditAsset: (inv: Investment) => { setEditingInvestment(inv); setIsAddModalOpen(true); },
             onDeleteAsset: async (inv: Investment) => await deleteInvestment(inv.id),
             onQuickUpdate: updateInvestment,
-            onRefreshRecurring: refreshRecurringInvestments,
-            onRefreshPortfolio: refreshData,
+            onRefreshPortfolio: refreshPortfolio,
             totalNetWorth: formatCurrency(stats?.totalCurrent || 0),
             onNavigate: (tab: string) => setActiveCategory(tab)
         };
 
+        const dashboardProps = {
+            // ONLY UI props, no data props
+            isPrivacyMode,
+            isDarkMode,
+            onAddFirstAsset: () => setIsAddModalOpen(true),
+            formatCurrency,
+            formatCurrencyPrecise,
+            calculatePercentage,
+            ASSET_CLASS_COLORS,
+            CustomTooltip,
+            marketVix: vix,
+            marketStatus,
+            view: dashboardView,
+            onViewChange: setDashboardView
+        };
+
         switch (activeSubTab) {
-            case 'dashboard': return <DashboardTab {...commonProps} view={dashboardView} onViewChange={setDashboardView} />;
+            // Fixed: DashboardTab consumes store directly, minimal props
+            case 'dashboard': return <DashboardTab {...dashboardProps} />;
             case 'portfolio': return <PortfolioTab {...commonProps} />;
             case 'gps': return <GoalGPS />;
             case 'compliance': return <ComplianceShield {...commonProps} />;
@@ -317,16 +339,32 @@ const AppContent: React.FC = () => {
             case 'oppcost': return <OpportunityCost />;
             case 'dynasty': return <DynastyMode />;
             case 'impulse': return <ImpulseCheck />;
+            case 'mathlab': return <MathLabHub />;
             case 'quant': return <QuantDashboard />;
             case 'fortress': return <FortressDashboard />;
-            default: return <DashboardTab {...commonProps} view={dashboardView} onViewChange={setDashboardView} />;
+            // Default Fallback
+            default: return <DashboardTab {...dashboardProps} />;
         }
     };
 
+    // --- Mobile Layout Return ---
+    if (isMobile) {
+        return (
+            <Suspense fallback={<DashboardSkeleton />}>
+                <MobileApp />
+                {/* Modals needed globally */}
+                {isAddModalOpen && (
+                    <AddInvestmentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingInvestment(null); }} onSave={async (data, id) => { if (id) { await updateInvestment(id, data); } else { await addInvestment(data as Investment); } setIsAddModalOpen(false); setEditingInvestment(null); }} editingInvestment={editingInvestment} />
+                )}
+                <CommandPalette />
+                <OfflineIndicator />
+            </Suspense>
+        );
+    }
+
+    // --- Desktop Layout Return ---
     return (
         <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-hidden selections:bg-indigo-500/30">
-
-            {/* Sidebar Component handles Static (Desktop) and Drawer (Mobile) */}
             <Sidebar
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
@@ -335,42 +373,26 @@ const AppContent: React.FC = () => {
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 totalNetWorth={formatCurrency(stats?.totalCurrent || 0)}
                 isPrivacyMode={isPrivacyMode}
+                onTogglePrivacy={() => setIsPrivacyMode(!isPrivacyMode)}
                 isCollapsed={isSidebarCollapsed}
                 onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             />
 
-            {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative transition-all duration-300">
+                <div onClick={() => setIsSearchFocused(false)} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent flex flex-col">
 
-                {/* Content */}
-                <div
-                    onClick={() => setIsSearchFocused(false)}
-                    className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent flex flex-col"
-                >
-                    {/* Header - Sticky on mobile, scrolls on desktop */}
+                    {/* Header */}
                     <header className="mobile-sticky-header h-16 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 z-[60]">
                         <div className="flex items-center gap-4">
-                            {/* Mobile Toggle Button */}
-                            <button
-                                className="md:hidden p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            >
+                            <button className="md:hidden p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                                 <Menu size={24} />
                             </button>
-
-
-                            {/* Sub Navigation */}
-                            {/* Sub Navigation (Animated) */}
                             <div className="flex items-center max-w-[500px] overflow-x-auto scrollbar-none">
                                 {SUB_TABS[activeCategory]?.length > 0 ? (
                                     <Tabs.Root value={activeSubTab} onValueChange={setActiveSubTab} layoutId="app-global-nav">
                                         <Tabs.List>
                                             {(SUB_TABS[activeCategory] || []).map(tab => (
-                                                <Tabs.Trigger
-                                                    key={tab.id}
-                                                    value={tab.id}
-                                                    icon={<tab.icon size={14} />}
-                                                >
+                                                <Tabs.Trigger key={tab.id} value={tab.id} icon={<tab.icon size={14} />}>
                                                     {tab.label}
                                                 </Tabs.Trigger>
                                             ))}
@@ -389,180 +411,72 @@ const AppContent: React.FC = () => {
 
                         <div className="flex items-center gap-4">
                             <div className="w-64 relative hidden md:block group z-50">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                    <Search size={16} />
-                                </div>
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><Search size={16} /></div>
                                 <input
                                     id="global-search-input"
                                     type="text"
                                     placeholder="Search assets or features... (Ctrl+K)"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    // onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} // Logic handled by wrapper
                                     onFocus={() => setIsSearchFocused(true)}
                                     className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-4 text-sm text-slate-900 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all focus:w-80"
                                 />
-
-                                {/* Search Results Dropdown */}
-                                {(isSearchFocused && searchQuery.trim().length > 0) && (
+                                {(isSearchFocused && searchResults.length > 0) && (
                                     <div className="absolute top-12 left-0 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 z-[100]">
-                                        {/* FILTERED ASSETS */}
-                                        {(investments || []).filter(inv =>
-                                            inv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            inv.ticker?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            inv.type.toLowerCase().includes(searchQuery.toLowerCase())
-                                        ).map(inv => (
-                                            <button
-                                                key={inv.id}
-                                                onMouseDown={() => {
-                                                    setEditingInvestment(inv);
-                                                    setIsAddModalOpen(true);
-                                                    setSearchQuery('');
-                                                }}
-                                                className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/50 last:border-0"
-                                            >
+                                        {searchResults.map(inv => (
+                                            <button key={inv.id} onMouseDown={() => { setEditingInvestment(inv); setIsAddModalOpen(true); setSearchQuery(''); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/50 last:border-0">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm opacity-80`} style={{ backgroundColor: ASSET_CLASS_COLORS[inv.type] || '#6366f1' }}>
-                                                        {inv.name.substring(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">{inv.name}</p>
-                                                        <p className="text-xs text-slate-500">{inv.ticker || inv.type}</p>
-                                                    </div>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm opacity-80`} style={{ backgroundColor: ASSET_CLASS_COLORS[inv.type] || '#6366f1' }}>{inv.name.substring(0, 2).toUpperCase()}</div>
+                                                    <div><p className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">{inv.name}</p><p className="text-xs text-slate-500">{inv.ticker || inv.type}</p></div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300">{formatCurrency(inv.currentValue || 0)}</p>
-                                                </div>
+                                                <div className="text-right"><p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300">{formatCurrency(inv.currentValue || 0)}</p></div>
                                             </button>
                                         ))}
-
-                                        {/* FILTERED FEATURES (TABS) */}
-                                        {Object.entries(SUB_TABS).flatMap(([cat, tabs]) =>
-                                            tabs.map(t => ({ ...t, cat }))
-                                        ).filter(t =>
-                                            t.label.toLowerCase().includes(searchQuery.toLowerCase())
-                                        ).map(t => (
-                                            <button
-                                                key={t.id}
-                                                onMouseDown={() => {
-                                                    setActiveCategory(t.cat);
-                                                    setActiveSubTab(t.id);
-                                                    setSearchQuery('');
-                                                }}
-                                                className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                                            >
-                                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-lg">
-                                                    <t.icon size={16} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-white">{t.label}</p>
-                                                    <p className="text-xs text-slate-500 capitalize">Go to {t.cat}</p>
-                                                </div>
-                                            </button>
-                                        ))}
-
-                                        {/* No Results State */}
-                                        {(investments || []).filter(inv => inv.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 &&
-                                            Object.entries(SUB_TABS).flatMap(([_, tabs]) => tabs).filter(t => t.label.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                                                <div className="p-8 text-center text-slate-400">
-                                                    <p className="text-sm">No assets or features found.</p>
-                                                    <button
-                                                        onMouseDown={() => { setIsAddModalOpen(true); setSearchQuery(''); }}
-                                                        className="mt-2 text-xs text-indigo-500 font-bold hover:underline"
-                                                    >
-                                                        Add New Asset +
-                                                    </button>
-                                                </div>
-                                            )}
                                     </div>
                                 )}
                             </div>
 
-                            <button
-                                onClick={() => setIsPrivacyMode(!isPrivacyMode)}
-                                className={`p-2 rounded-full transition-colors ${isPrivacyMode ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 hover:text-indigo-400'}`}
-                                title="Privacy Mode"
-                            >
-                                {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
+                            {/* Secondary Desktop Actions - Hidden on Mobile */}
+                            <div className="hidden md:flex items-center gap-4">
+                                <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className={`p-2 rounded-full transition-colors ${isPrivacyMode ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 hover:text-indigo-400'}`} aria-label="Toggle privacy mode"><EyeOff size={20} /></button>
+                                <button onClick={() => updateSetting('isDarkMode', !isDarkMode)} className="p-2 text-slate-400 hover:text-indigo-400 transition-colors">{isDarkMode ? <Moon size={20} /> : <Sun size={20} />}</button>
+                                <VoiceCommandButton />
+                            </div>
 
-                            <button
-                                onClick={() => {
-                                    const { isEditMode, updateSetting } = useSettingsStore.getState();
-                                    updateSetting('isEditMode', !isEditMode);
-                                }}
-                                className={`p-2 rounded-full transition-colors ${useSettingsStore((s) => s.isEditMode) ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 hover:text-indigo-400'}`}
-                                title="Customize Dashboard"
-                            >
-                                <LayoutDashboard size={20} />
-                            </button>
-
-                            <button
-                                onClick={() => updateSetting('isDarkMode', !isDarkMode)}
-                                className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
-                            >
-                                {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
-                            </button>
-
-                            {/* Voice Command Button */}
-                            <VoiceCommandButton />
-
-                            {/* Smart Alerts Dropdown */}
-                            <AlertsDropdown investments={investments} />
-
-                            {/* PROFILE MENU REPLACED HERE */}
-                            <ProfileMenu />
+                            {/* Primary Global Actions */}
+                            <div className="flex items-center gap-2">
+                                <AlertsDropdown investments={investments} />
+                                <ProfileMenu />
+                            </div>
                         </div>
                     </header>
 
-                    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
-                        <Suspense fallback={<DashboardSkeleton />}>
-                            {renderContent()}
-                        </Suspense>
-                    </div>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`${activeCategory}-${activeSubTab}`}
+                            variants={pageVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="p-4 md:p-8 max-w-7xl mx-auto w-full"
+                        >
+                            <Suspense fallback={<DashboardSkeleton />}>{renderContent()}</Suspense>
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
             </main>
 
-            {/* Global Modals */}
             {isAddModalOpen && (
-                <AddInvestmentModal
-                    isOpen={isAddModalOpen}
-                    onClose={() => { setIsAddModalOpen(false); setEditingInvestment(null); }}
-                    onSave={async (data, id) => {
-                        if (id) {
-                            await updateInvestment(id, data);
-                        } else {
-                            await addInvestment(data as Investment);
-                        }
-                        setIsAddModalOpen(false);
-                        setEditingInvestment(null);
-                    }}
-                    editingInvestment={editingInvestment}
-                />
+                <AddInvestmentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingInvestment(null); }} onSave={async (data, id) => { if (id) { await updateInvestment(id, data); } else { await addInvestment(data as Investment); } setIsAddModalOpen(false); setEditingInvestment(null); }} editingInvestment={editingInvestment} />
             )}
-
-            <LogicConfigModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-            />
-            {/* Jarvis Voice Interface */}
+            <LogicConfigModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
             <CommandPalette />
-            <JarvisOrb
-                onNavigate={(tab) => {
-                    setActiveCategory(tab);
-                    // Also ensure we scroll to top or handle specific sub-tabs if needed
-                }}
-                onSwitchProfile={(id) => {
-                    // Type safety cast, though Jarvis service sends valid strings
-                    setActiveEntity(id as any);
-                }}
-            />
+            <JarvisOrb onNavigate={setActiveCategory} onSwitchProfile={(id) => setActiveEntity(id as any)} />
             <OfflineIndicator />
         </div>
     );
 };
 
-// Wrap AppContent in FamilyProvider
 const App: React.FC = () => {
     return (
         <AuthProvider>

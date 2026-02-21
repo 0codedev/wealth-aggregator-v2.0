@@ -187,7 +187,7 @@ const RetirementPlanner: React.FC<RetirementPlannerProps> = ({
                                         <XAxis dataKey="year" type="number" domain={['dataMin', 'dataMax']} />
                                         <YAxis tickFormatter={(val) => `${(val / 10000000).toFixed(0)}Cr`} />
                                         <Tooltip
-                                            formatter={(val: number) => formatCurrency(val)}
+                                            formatter={((val: number | undefined) => val ? formatCurrency(val) : '') as any}
                                             labelFormatter={(label) => `Age: ${label}`}
                                         />
                                         {simulations.map((s, i) => (

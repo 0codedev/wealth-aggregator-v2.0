@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 import { db, LifeEvent } from '../database';
 import { Investment, AggregatedData, InvestmentType } from '../types';
 import { useSettingsStore } from '../store/settingsStore';
@@ -18,19 +18,29 @@ export interface PortfolioStats {
     dayChangePercent: number;
     diversityScore: number;
     topAsset: { name: string; percent: number };
+    totalLiability?: number; // Added to match usage
 }
 
 export function usePortfolio() {
-    const investments = useLiveQuery(() => db.investments.toArray(), []) || [];
-    const history = useLiveQuery(() => db.history.toArray(), []) || [];
-    const lifeEvents = useLiveQuery(() => db.life_events.toArray(), []) || [];
+    const [investments, setInvestments] = useState<Investment[]>([]);
+    const [history, setHistory] = useState<any[]>([]);
+    const [lifeEvents, setLifeEvents] = useState<LifeEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (investments !== undefined) {
+        const subInv = liveQuery(() => db.investments.toArray()).subscribe(data => {
+            setInvestments(data);
             setIsLoading(false);
-        }
-    }, [investments]);
+        });
+        const subHist = liveQuery(() => db.history.toArray()).subscribe(setHistory);
+        const subEvents = liveQuery(() => db.life_events.toArray()).subscribe(setLifeEvents);
+
+        return () => {
+            subInv.unsubscribe();
+            subHist.unsubscribe();
+            subEvents.unsubscribe();
+        };
+    }, []);
 
     const { loanPrincipal } = useSettingsStore();
 

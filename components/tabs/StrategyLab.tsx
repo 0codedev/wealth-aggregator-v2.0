@@ -12,12 +12,12 @@ const StrategyLab: React.FC = () => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-6">
+            <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                 <div className="flex items-center gap-3 mb-2">
                     <Beaker className="text-purple-500" size={24} />
-                    <h1 className="text-2xl font-bold text-white">Strategy Lab</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Strategy Lab</h1>
                 </div>
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                     Quantitative Backtesting & Simulation Engine. Validate your hypothesis before risking capital.
                 </p>
             </div>

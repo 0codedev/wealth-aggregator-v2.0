@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+import { liveQuery } from 'dexie';
 import { db, Goal } from '../database';
 
 export interface UseGoalsReturn {
@@ -26,8 +26,10 @@ const GOAL_COLORS = [
 
 export function useGoals(): UseGoalsReturn {
     // Fetch all goals, sorted by priority and target date
-    const goals = useLiveQuery(
-        async () => {
+    const [goals, setGoals] = useState<Goal[]>([]);
+
+    useEffect(() => {
+        const subscription = liveQuery(async () => {
             const allGoals = await db.goals.toArray();
             return allGoals.sort((a, b) => {
                 const priorityOrder = { 'Critical': 0, 'Important': 1, 'Nice-to-Have': 2 };
@@ -35,9 +37,10 @@ export function useGoals(): UseGoalsReturn {
                 if (pDiff !== 0) return pDiff;
                 return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
             });
-        },
-        []
-    ) || [];
+        }).subscribe(setGoals);
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     // Add a new goal
     const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt'>): Promise<number> => {

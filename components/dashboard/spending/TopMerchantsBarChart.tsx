@@ -56,7 +56,7 @@ export const TopMerchantsBarChart: React.FC<TopMerchantsBarChartProps> = ({ form
                             cursor={{ fill: 'transparent' }}
                             contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', color: '#fff' }}
                             itemStyle={{ color: '#fff' }}
-                            formatter={(value: number) => formatCurrency(value)}
+                            formatter={((value: number | undefined) => value ? formatCurrency(value) : '') as any}
                             labelFormatter={(label) => {
                                 // Find full name based on truncated display name if needed, or just show label
                                 return label;

@@ -102,14 +102,14 @@ export const LiveSimulator: React.FC = () => {
 
     // --- Initialize Data ---
     useEffect(() => {
-        const initialData = [];
+        const initialData: Array<{ open: number; high: number; low: number; close: number; ema9: number; ema20: number; volume: number; time: string }> = [];
         let price = selectedSymbol.base;
         for (let i = 0; i < 60; i++) {
             const candle = generateCandle(price, selectedSymbol.vol * timeframe.volMult);
 
             // EMAs
-            const ema9 = i > 0 ? (candle.close * (2 / 10)) + (initialData[i - 1].ema9 * (1 - 2 / 10)) : candle.close;
-            const ema20 = i > 0 ? (candle.close * (2 / 21)) + (initialData[i - 1].ema20 * (1 - 2 / 21)) : candle.close;
+            const ema9: number = i > 0 ? (candle.close * (2 / 10)) + (initialData[i - 1].ema9 * (1 - 2 / 10)) : candle.close;
+            const ema20: number = i > 0 ? (candle.close * (2 / 21)) + (initialData[i - 1].ema20 * (1 - 2 / 21)) : candle.close;
 
             initialData.push({ ...candle, ema9, ema20 });
             price = candle.close;
@@ -216,18 +216,18 @@ export const LiveSimulator: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-[700px] bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden text-slate-200 font-sans shadow-2xl">
+        <div className="flex flex-col h-[700px] bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-900 overflow-hidden text-slate-800 dark:text-slate-200 font-sans shadow-2xl">
 
             {/* 1. PRO TOP BAR */}
-            <div className="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-900 shrink-0">
+            <div className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 bg-slate-50 dark:bg-slate-900 shrink-0">
                 <div className="flex items-center gap-3">
                     {/* Symbol Selector */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors group relative border border-slate-700">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors group relative border border-slate-200 dark:border-slate-700">
                         <Search size={14} className="text-slate-400" />
-                        <span className="font-black text-sm text-white tracking-wide">{selectedSymbol.symbol}</span>
-                        <div className="absolute top-full left-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl hidden group-hover:block z-50 overflow-hidden">
+                        <span className="font-black text-sm text-slate-900 dark:text-white tracking-wide">{selectedSymbol.symbol}</span>
+                        <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl hidden group-hover:block z-50 overflow-hidden">
                             {SYMBOLS.map(s => (
-                                <div key={s.symbol} onClick={() => setSelectedSymbol(s)} className="px-4 py-3 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white cursor-pointer border-b border-slate-800/50 last:border-0 flex justify-between">
+                                <div key={s.symbol} onClick={() => setSelectedSymbol(s)} className="px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer border-b border-slate-200 dark:border-slate-800/50 last:border-0 flex justify-between">
                                     <span>{s.symbol}</span>
                                     <span className="text-slate-500">Vol: {s.vol}</span>
                                 </div>
@@ -258,7 +258,7 @@ export const LiveSimulator: React.FC = () => {
                         <button onClick={() => setIndicators(p => ({ ...p, ema20: !p.ema20 }))} className={`px-2 py-1 rounded text-[10px] font-bold border ${indicators.ema20 ? 'bg-amber-900/30 text-amber-500 border-amber-500/30' : 'text-slate-500 border-transparent hover:bg-slate-800'}`}>EMA 20</button>
                         <button onClick={() => setIndicators(p => ({ ...p, rsi: !p.rsi }))} className={`px-2 py-1 rounded text-[10px] font-bold border ${indicators.rsi ? 'bg-fuchsia-900/30 text-fuchsia-400 border-fuchsia-500/30' : 'text-slate-500 border-transparent hover:bg-slate-800'}`}>RSI</button>
                     </div>
-                </div>
+                </div >
 
                 <div className="flex items-center gap-4">
                     {/* Drawing Tool */}
@@ -277,7 +277,7 @@ export const LiveSimulator: React.FC = () => {
                         <RefreshCcw size={16} />
                     </button>
                 </div>
-            </div>
+            </div >
 
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
 
@@ -530,6 +530,6 @@ export const LiveSimulator: React.FC = () => {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 };

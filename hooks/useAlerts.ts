@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { liveQuery } from 'dexie';
 import { db, Alert } from '../database';
 import { Investment } from '../types';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { notificationService } from '../services/NotificationService';
 
 interface UseAlertsResult {
@@ -25,19 +25,10 @@ interface UseAlertsResult {
 
 /**
  * Hook for managing smart portfolio alerts with browser notifications.
- * Supports price targets, stop losses, SIP reminders, and tax deadlines.
- * 
- * @example
- * const { createPriceAlert, alerts, requestPermission } = useAlerts();
- * 
- * // Create a price target alert
- * await createPriceAlert(reliance, 3000, 'price_target');
- * 
- * // Check if any alerts are triggered
- * await checkAlerts(investments);
  */
 export function useAlerts(): UseAlertsResult {
     const [hasPermission, setHasPermission] = useState(false);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
 
     // Check permission on mount
     useEffect(() => {
@@ -45,11 +36,11 @@ export function useAlerts(): UseAlertsResult {
     }, []);
 
     // Live query for all alerts
-    const alerts = useLiveQuery(
-        () => db.alerts.orderBy('createdAt').reverse().toArray(),
-        [],
-        []
-    ) ?? [];
+    useEffect(() => {
+        const subscription = liveQuery(() => db.alerts.orderBy('createdAt').reverse().toArray())
+            .subscribe(setAlerts);
+        return () => subscription.unsubscribe();
+    }, []);
 
     // Filter active alerts
     const activeAlerts = alerts.filter(a => a.isActive);

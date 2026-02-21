@@ -15,15 +15,15 @@ export const LiabilityWatchdogWidget: React.FC = () => {
     const totalYearlyDrag = traps.reduce((sum, t) => sum + t.yearlyImpact, 0);
 
     return (
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 relative overflow-hidden h-full flex flex-col group hover:border-emerald-500/20 transition-all">
+        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 relative overflow-hidden h-full flex flex-col group hover:border-emerald-500/20 transition-all">
             {/* Header */}
             <div className="flex justify-between items-start mb-6 w-full">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500">
                         <ShieldCheck size={20} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-wider">DEBT RADAR</h3>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">DEBT RADAR</h3>
                         <p className="text-[10px] text-slate-500 font-mono font-bold uppercase">Perimeter Secure</p>
                     </div>
                 </div>
@@ -38,11 +38,11 @@ export const LiabilityWatchdogWidget: React.FC = () => {
             <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10">
                 {traps.length === 0 ? (
                     <div className="space-y-4 py-4">
-                        <div className="w-20 h-20 mx-auto rounded-full border-2 border-slate-800 flex items-center justify-center bg-slate-900/50">
+                        <div className="w-20 h-20 mx-auto rounded-full border-2 border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50">
                             <ShieldCheck size={40} className="text-emerald-900" style={{ opacity: 0.5 }} />
                         </div>
                         <div>
-                            <h4 className="text-slate-300 font-bold text-sm mb-1">No Active Traps</h4>
+                            <h4 className="text-slate-500 dark:text-slate-300 font-bold text-sm mb-1">No Active Traps</h4>
                             <p className="text-[10px] text-slate-600 max-w-[180px] mx-auto leading-relaxed">
                                 Cash flow signals are clean. No recurring leaks found.
                             </p>
@@ -51,13 +51,13 @@ export const LiabilityWatchdogWidget: React.FC = () => {
                 ) : (
                     <div className="w-full space-y-3">
                         {traps.slice(0, 3).map((trap, idx) => (
-                            <div key={idx} className="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-800">
+                            <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-slate-800 rounded flex items-center justify-center text-xs font-bold text-slate-500 uppercase">
+                                    <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center text-xs font-bold text-slate-500 uppercase">
                                         {trap.merchant.charAt(0)}
                                     </div>
                                     <div className="text-left">
-                                        <p className="text-xs font-bold text-slate-300 capitalize">{trap.merchant}</p>
+                                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300 capitalize">{trap.merchant}</p>
                                         <p className="text-[10px] text-slate-600 font-mono">{trap.frequency}</p>
                                     </div>
                                 </div>

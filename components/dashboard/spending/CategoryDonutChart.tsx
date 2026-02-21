@@ -52,7 +52,7 @@ const CategoryDonutChartBase: React.FC<CategoryDonutChartProps> = ({ formatCurre
                         <Tooltip
                             contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', color: '#fff' }}
                             itemStyle={{ color: '#fff' }}
-                            formatter={(value: number) => formatCurrency(value)}
+                            formatter={((value: number | undefined) => value ? formatCurrency(value) : '') as any}
                         />
                         <Legend
                             verticalAlign="bottom"

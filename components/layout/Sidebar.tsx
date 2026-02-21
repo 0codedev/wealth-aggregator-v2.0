@@ -1,8 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, LayoutDashboard, Wallet, Globe, Bot, Settings, X, Target, Zap, Brain, Users, User, Baby, Building2, Lightbulb, Layers } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Wallet, Globe, Bot, Settings, X, Target, Zap, Brain, Users, User, Baby, Building2, Lightbulb, Layers, Sun, Moon, Eye, EyeOff } from 'lucide-react';
 import { useFamily } from '../../contexts/FamilyContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { springTransition } from '../ui/animations';
+import { useSettingsStore } from '../../store/settingsStore';
 
 interface SidebarProps {
     activeCategory: string;
@@ -12,6 +14,7 @@ interface SidebarProps {
     onOpenSettings: () => void;
     totalNetWorth: string;
     isPrivacyMode: boolean;
+    onTogglePrivacy?: () => void;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
 }
@@ -36,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     onOpenSettings,
     totalNetWorth,
     isPrivacyMode,
+    onTogglePrivacy,
     isCollapsed,
     onToggleCollapse
 }) => {
@@ -44,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         setIsMobileMenuOpen(false);
     }, [activeCategory, setIsMobileMenuOpen]);
 
-    const SidebarContent = () => (
+    const SidebarContent = ({ prefix = 'desktop' }: { prefix?: string }) => (
         <>
             <div
                 className={`p-6 flex items-center justify-between ${isCollapsed ? 'justify-center cursor-pointer' : 'cursor-pointer'}`}
@@ -80,25 +84,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <button
                             key={cat.id}
                             onClick={() => setActiveCategory(cat.id)}
-                            className={`relative flex items-center gap-3 w-full p-3 rounded-xl transition-all duration-200 group ${isActive
-                                ? 'text-indigo-600 dark:text-white'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                                } ${isCollapsed ? 'justify-center' : ''}`}
+                            className={`relative flex items-center gap-3 w-full p-3 rounded-xl transition-all duration-200 group border-l-4 ${isActive
+                                ? 'bg-indigo-50 dark:bg-slate-800/80 border-indigo-500 text-indigo-600 dark:text-white shadow-sm'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
+                                } ${isCollapsed ? 'justify-center border-l-0 border-b-2' : ''}`}
                         >
-                            {isActive && (
-                                <>
-                                    <motion.div
-                                        layoutId="sidebarActiveBubble"
-                                        className="absolute inset-0 bg-indigo-50 dark:bg-slate-800/80 rounded-xl z-0 shadow-sm"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                    <motion.div
-                                        layoutId="sidebarActiveTab"
-                                        className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-r-full z-10"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                </>
-                            )}
 
                             <div className="relative z-10 flex items-center gap-3">
                                 <cat.icon size={20} className={`transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'group-hover:text-slate-700 dark:group-hover:text-slate-300'}`} />
@@ -146,25 +136,61 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
         <>
             {/* Desktop Sidebar (Static) */}
-            <aside className={`hidden md:flex flex-col ${isCollapsed ? 'w-20' : 'lg:w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-full transition-all duration-300 z-40 ease-in-out`}>
-                <SidebarContent />
-            </aside>
+            <motion.aside
+                layout
+                transition={springTransition}
+                className={`hidden md:flex flex-col ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-full z-40`}
+            >
+                <SidebarContent prefix="desktop" />
+            </motion.aside>
 
             {/* Mobile Sidebar (Drawer) */}
-            <div className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-                {/* Backdrop */}
-                <div
-                    className={`absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                ></div>
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <div className="md:hidden fixed inset-0 z-50 pointer-events-auto">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
 
-                {/* Drawer */}
-                <aside
-                    className={`absolute top-0 left-0 bottom-0 w-80 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
-                >
-                    <SidebarContent />
-                </aside>
-            </div>
+                        {/* Drawer */}
+                        <motion.aside
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={springTransition}
+                            className="absolute top-0 left-0 bottom-0 w-80 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col"
+                        >
+                            <div className="flex-1 overflow-y-auto">
+                                <SidebarContent prefix="mobile" />
+                            </div>
+
+                            {/* Mobile Drawer Footer Utilities (Replaced Header Icons) */}
+                            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-around">
+                                <button
+                                    onClick={onTogglePrivacy}
+                                    className={`p-3 rounded-full transition-colors flex flex-col items-center gap-1 ${isPrivacyMode ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                >
+                                    {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    <span className="text-[10px] uppercase font-bold tracking-wider">Privacy</span>
+                                </button>
+
+                                <button
+                                    onClick={() => useSettingsStore.getState().updateSetting('isDarkMode', !useSettingsStore.getState().isDarkMode)}
+                                    className="p-3 rounded-full text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-1"
+                                >
+                                    {useSettingsStore.getState().isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                                    <span className="text-[10px] uppercase font-bold tracking-wider">Theme</span>
+                                </button>
+                            </div>
+                        </motion.aside>
+                    </div>
+                )}
+            </AnimatePresence>
         </>
     );
 };

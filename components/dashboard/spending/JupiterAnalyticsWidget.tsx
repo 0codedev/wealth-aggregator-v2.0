@@ -295,7 +295,7 @@ export const JupiterAnalyticsWidget: React.FC<JupiterAnalyticsWidgetProps> = ({ 
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', color: '#fff', padding: '12px' }}
                                     cursor={{ stroke: '#0f172a', strokeWidth: 1 }}
-                                    formatter={(value: number) => [formatCurrency(value), chartMode === 'DAILY' ? 'Cumulative' : 'Daily']}
+                                    formatter={((value: number | undefined) => value ? [formatCurrency(value), chartMode === 'DAILY' ? 'Cumulative' : 'Daily'] : ['', '']) as any}
                                 />
                                 <Area
                                     type="monotone" // or "step" for step feel

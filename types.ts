@@ -23,6 +23,9 @@ export interface RecurringConfig {
   isEnabled: boolean;
   frequency: RecurringFrequency;
   amount: number;
+  sipDay?: number; // Day of month (1-31), default 5
+  startDate?: string; // ISO date when SIP started
+  installmentsApplied?: number; // Number of SIP installments already applied
 }
 
 export interface Investment {
@@ -42,6 +45,7 @@ export interface Investment {
   recurring?: RecurringConfig;
   isHiddenFromTotals?: boolean;
   owner?: 'SELF' | 'SPOUSE' | 'HUF' | 'KIDS' | 'JOINT' | 'MOM'; // Family Office Support
+  status?: 'ACTIVE' | 'ARCHIVED'; // Default 'ACTIVE'
 }
 
 export interface HistoryEntry {
@@ -75,3 +79,19 @@ export const ASSET_CLASS_COLORS: Record<string, string> = {
   'Real Estate': '#ec4899',
   'Other': '#64748b',
 };
+export interface PortfolioStats {
+  totalValue: number;
+  totalCurrent: number;
+  totalInvested: number;
+  totalAssets: number;
+  totalGain: number;
+  totalPL: number;
+  totalGainPercent: string;
+  totalPLPercent: string;
+  dayChange: number;
+  dayChangePercent: number;
+  diversityScore: number;
+  topAsset: { name: string; percent: number };
+  totalLiability?: number;
+  [key: string]: any;
+}

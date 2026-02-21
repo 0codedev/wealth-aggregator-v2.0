@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { Investment } from '../../types';
 import { db, Beneficiary } from '../../database';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 import { useToast } from '../shared/ToastProvider';
 
 interface LegacyVaultProps {
@@ -25,10 +25,12 @@ const LegacyVault: React.FC<LegacyVaultProps> = ({ investments, totalNetWorth })
     const [isInitializing, setIsInitializing] = useState(true);
 
     // --- Persistent State via IndexedDB ---
-    const beneficiaries = useLiveQuery(
-        () => db.beneficiaries.toArray(),
-        []
-    ) ?? [];
+    const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+
+    useEffect(() => {
+        const subscription = liveQuery(() => db.beneficiaries.toArray()).subscribe(setBeneficiaries);
+        return () => subscription.unsubscribe();
+    }, []);
 
     // Initialize with default beneficiaries if table is empty
     useEffect(() => {
@@ -215,14 +217,14 @@ const LegacyVault: React.FC<LegacyVaultProps> = ({ investments, totalNetWorth })
                                             <input
                                                 type="range" min="0" max="100"
                                                 value={b.allocation}
-                                                onChange={e => updateAllocation(b.id, Number(e.target.value))}
+                                                onChange={e => b.id !== undefined && updateAllocation(b.id, Number(e.target.value))}
                                                 className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                             />
                                             <span className="font-mono font-bold w-10 text-right">{b.allocation}%</span>
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => deleteBeneficiary(b.id)}
+                                        onClick={() => b.id !== undefined && deleteBeneficiary(b.id)}
                                         className="text-slate-400 hover:text-rose-500 transition-colors"
                                     >
                                         <Trash2 size={18} />

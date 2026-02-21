@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 import { useToast } from './shared/ToastProvider';
-import { db, IPOApplication } from '../database';
+import { db, IPOApplication, Friend } from '../database';
 import { Investment, InvestmentType } from '../types';
 import { Users, RefreshCw, ShieldCheck, Plus, Trash2, BarChart4, Rocket, CheckCircle2, ArrowRight, Wallet, ChevronDown, ChevronRight, LayoutList, GripVertical } from 'lucide-react';
 import { formatCurrency } from '../utils/helpers';
@@ -29,7 +29,12 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
     const [formError, setFormError] = useState<string | null>(null);
 
     // Vault Integration
-    const friends = useLiveQuery(() => db.friends.toArray());
+    const [friends, setFriends] = useState<Friend[]>([]);
+
+    useEffect(() => {
+        const subscription = liveQuery(() => db.friends.toArray()).subscribe(setFriends);
+        return () => subscription.unsubscribe();
+    }, []);
 
     // View Mode: 'LIST' or 'GROUPED'
     const [viewMode, setViewMode] = useState<'LIST' | 'GROUPED'>('LIST');

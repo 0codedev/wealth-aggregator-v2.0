@@ -1,5 +1,5 @@
-import { useMemo, useCallback, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { liveQuery } from 'dexie';
 import { db, Conversation, ChatMessage } from '../database';
 
 interface Message {
@@ -33,34 +33,43 @@ export function useConversations(initialPersona: string = 'advisor'): UseConvers
     const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
     // Fetch all conversations for this persona
-    const conversations = useLiveQuery(
-        () => db.conversations
+    useEffect(() => {
+        const subscription = liveQuery(() => db.conversations
             .where('persona')
             .equals(initialPersona)
             .reverse()
-            .sortBy('updatedAt'),
-        [initialPersona]
-    ) || [];
+            .sortBy('updatedAt')
+        ).subscribe(setConversations);
+        return () => subscription.unsubscribe();
+    }, [initialPersona]);
 
-    // Fetch active conversation
-    const activeConversation = useLiveQuery(
-        () => activeConversationId
-            ? db.conversations.get(activeConversationId)
-            : undefined,
-        [activeConversationId]
-    ) || null;
+    // Fetch active conversation and messages
+    useEffect(() => {
+        if (!activeConversationId) {
+            setActiveConversation(null);
+            setChatMessages([]);
+            return;
+        }
 
-    // Fetch messages for active conversation
-    const chatMessages = useLiveQuery(
-        () => activeConversationId
-            ? db.chat_messages
-                .where('conversationId')
-                .equals(activeConversationId)
-                .sortBy('timestamp')
-            : [],
-        [activeConversationId]
-    ) || [];
+        const subAc = liveQuery(() => db.conversations.get(activeConversationId))
+            .subscribe(c => setActiveConversation(c || null));
+
+        const subMsg = liveQuery(() => db.chat_messages
+            .where('conversationId')
+            .equals(activeConversationId)
+            .sortBy('timestamp')
+        ).subscribe(setChatMessages);
+
+        return () => {
+            subAc.unsubscribe();
+            subMsg.unsubscribe();
+        };
+    }, [activeConversationId]);
 
     // Convert ChatMessage to Message format
     const messages = useMemo<Message[]>(() =>
@@ -95,7 +104,7 @@ export function useConversations(initialPersona: string = 'advisor'): UseConvers
 
     // Delete conversation and its messages
     const deleteConversation = useCallback(async (id: number) => {
-        await db.transaction('rw', db.conversations, db.chat_messages, async () => {
+        await (db as any).transaction('rw', db.conversations, db.chat_messages, async () => {
             await db.chat_messages.where('conversationId').equals(id).delete();
             await db.conversations.delete(id);
         });

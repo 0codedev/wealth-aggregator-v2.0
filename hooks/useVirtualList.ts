@@ -8,7 +8,7 @@ interface VirtualListResult<T> {
     /** Offset from top for first visible item */
     offsetY: number;
     /** Ref to attach to scroll container */
-    containerRef: React.RefObject<HTMLDivElement>;
+    containerRef: React.RefObject<HTMLDivElement | null>;
     /** Start index of visible items */
     startIndex: number;
     /** End index of visible items */

@@ -347,12 +347,12 @@ const MacroPulse: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-500 pb-20">
 
             {/* Global Ticker */}
-            <div className="bg-slate-900 border-y border-slate-800 overflow-hidden py-2 -mx-4 md:-mx-8">
+            <div className="bg-slate-100 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800 overflow-hidden py-2 -mx-4 md:-mx-8">
                 <div className="flex animate-marquee whitespace-nowrap gap-8 px-4">
                     {[...globalIndices, ...globalIndices].map((idx, i) => (
                         <div key={i} className="flex items-center gap-2 text-sm font-mono">
-                            <span className="text-slate-400 font-bold">{idx.name}</span>
-                            <span className="text-white">
+                            <span className="text-slate-500 dark:text-slate-400 font-bold">{idx.name}</span>
+                            <span className="text-slate-900 dark:text-white">
                                 {idx.name === 'BITCOIN' ? '$' : ''}
                                 {idx.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
@@ -365,15 +365,15 @@ const MacroPulse: React.FC = () => {
             </div>
 
             {/* Header */}
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 <div className="relative z-10 flex items-start justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                            <Globe className="text-blue-400" size={28} />
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                            <Globe className="text-blue-500 dark:text-blue-400" size={28} />
                             Macro Pulse
                         </h2>
-                        <p className="text-slate-400 mt-1">
+                        <p className="text-slate-500 dark:text-slate-400 mt-1">
                             Global economic indicators and their impact on your portfolio.
                         </p>
                     </div>
@@ -492,29 +492,29 @@ const MacroPulse: React.FC = () => {
                 </div>
 
                 {/* Impact Analysis */}
-                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Zap size={20} className="text-yellow-400" /> Impact Analysis
+                <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Zap size={20} className="text-yellow-500 dark:text-yellow-400" /> Impact Analysis
                     </h3>
                     <div className="space-y-4">
                         {IMPACT_RULES.filter(rule => rule.condition(macroIndicators)).map((rule, idx) => (
-                            <div key={idx} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                            <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${rule.impact === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${rule.impact === 'POSITIVE' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400'}`}>
                                         {rule.impact}
                                     </span>
-                                    <span className="text-xs text-slate-400">for</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">for</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {rule.sectors.map(sector => (
-                                        <span key={sector} className="text-xs font-bold text-white bg-slate-800 px-2 py-1 rounded-md border border-slate-700">
+                                        <span key={sector} className="text-xs font-bold text-slate-800 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                                             {sector}
                                         </span>
                                     ))}
                                 </div>
                                 <div className="flex gap-2 items-start">
                                     <Info size={14} className="text-slate-500 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                                         {rule.reason}
                                     </p>
                                 </div>
@@ -592,12 +592,12 @@ const MacroPulse: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* Fear & Greed Index */}
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Activity size={20} className="text-orange-400" /> Fear & Greed Index
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Activity size={20} className="text-orange-500 dark:text-orange-400" /> Fear & Greed Index
                     </h3>
                     <FearGreedGauge value={42} />
-                    <p className="text-xs text-slate-400 text-center mt-4">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
                         Based on VIX, market momentum, and investor behavior
                     </p>
                 </div>

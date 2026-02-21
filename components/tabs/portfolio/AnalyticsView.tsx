@@ -4,6 +4,8 @@ import { Investment, CHART_COLORS, InvestmentType } from '../../../types';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Globe, Briefcase, Tag, TrendingDown, AlertTriangle } from 'lucide-react';
 import { ConcentrationAlerts } from '../../portfolio/ConcentrationAlerts';
+import { RiskEngine } from '../../../services/RiskEngine';
+import { RiskIntelligence } from './RiskIntelligence';
 
 interface AnalyticsViewProps {
     investments: Investment[];
@@ -37,6 +39,10 @@ const inferSector = (name: string, type: InvestmentType, currentSector?: string)
 };
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ investments, formatCurrency, isPrivacyMode }) => {
+
+    // Instantiate Risk Engine (Memoized)
+    const riskEngine = useMemo(() => new RiskEngine(), []);
+    const totalAssets = useMemo(() => investments.reduce((sum, inv) => sum + inv.currentValue, 0), [investments]);
 
     // Group by Sector (with Smart Inference)
     const sectorData = useMemo(() => {
@@ -93,6 +99,11 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ investments, forma
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+            {/* RISK INTELLIGENCE CENTER - AI Layer */}
+            <div className="md:col-span-2">
+                <RiskIntelligence investments={investments} totalNetWorth={totalAssets} riskEngine={riskEngine} />
+            </div>
+
             {/* CONCENTRATION RISK ALERTS - P0 Enhancement */}
             <div className="md:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <ConcentrationAlerts investments={investments} threshold={20} />

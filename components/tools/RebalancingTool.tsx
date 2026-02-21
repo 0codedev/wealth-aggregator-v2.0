@@ -122,7 +122,7 @@ export const RebalancingTool: React.FC<RebalancingToolProps> = ({
                                         <Cell key={`cell-${index}`} fill={ASSET_CLASS_COLORS[entry.name] || '#64748b'} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                                <Tooltip formatter={((val: number | undefined) => val ? formatCurrency(val) : '') as any} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>

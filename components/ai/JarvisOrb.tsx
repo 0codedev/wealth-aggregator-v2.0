@@ -50,11 +50,11 @@ const JarvisOrb: React.FC<JarvisOrbProps> = ({ onNavigate, onSwitchProfile }) =>
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+        <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col items-end gap-2">
 
             {/* Transcript/Response Bubble */}
             {(transcript || lastResponse || showInput) && (
-                <div className={`mb-2 w-80 bg-slate-900/95 border border-indigo-500/50 p-4 rounded-2xl rounded-tr-none backdrop-blur-md shadow-2xl transition-all duration-300 animate-in slide-in-from-right-10 fade-in`}>
+                <div className={`mb-2 w-[calc(100vw-2rem)] md:w-80 bg-slate-900/95 border border-indigo-500/50 p-4 rounded-2xl rounded-tr-none backdrop-blur-md shadow-2xl transition-all duration-300 animate-in slide-in-from-right-10 fade-in`}>
 
                     {/* Header */}
                     <div className="flex items-center justify-between mb-2">
@@ -90,7 +90,7 @@ const JarvisOrb: React.FC<JarvisOrbProps> = ({ onNavigate, onSwitchProfile }) =>
                                     type="text"
                                     value={manualInput}
                                     onChange={e => setManualInput(e.target.value)}
-                                    placeholder="Type command (e.g., 'Switch to Mom')..."
+                                    placeholder="Type command..."
                                     className="w-full bg-black/50 border border-slate-700 rounded-lg py-2 pl-3 pr-10 text-sm text-white focus:border-indigo-500 outline-none placeholder:text-slate-600 font-mono"
                                 />
                                 <button
@@ -109,7 +109,7 @@ const JarvisOrb: React.FC<JarvisOrbProps> = ({ onNavigate, onSwitchProfile }) =>
             {/* The Orb Button */}
             <button
                 onClick={toggleListening}
-                className={`relative group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 shadow-2xl z-50 ${isListening
+                className={`relative group flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full transition-all duration-500 shadow-2xl z-50 ${isListening
                     ? 'bg-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.4)] border border-red-500/50'
                     : isSpeaking
                         ? 'bg-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.4)] border border-emerald-500/50'

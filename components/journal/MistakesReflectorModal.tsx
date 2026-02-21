@@ -1,18 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { liveQuery } from 'dexie';
+import { db, Mistake } from '../../database';
+import { Download, Upload, RefreshCw } from 'lucide-react';
 import { X, AlertTriangle, TrendingDown, BookOpen, Plus, Trash2, DollarSign, Brain, Target, ShieldAlert, Pencil } from 'lucide-react';
 import { formatCurrency } from '../../utils/helpers';
 import { useToast } from '../shared/ToastProvider';
 
-interface Mistake {
-    id: string;
-    date: string;
-    title: string;
-    cost: number;
-    category: 'TRADING' | 'LIFE';
-    lesson: string;
-    emotionalState?: string;
-}
+// Interface moved to database.ts (Mistake)
 
 interface MistakesReflectorModalProps {
     isOpen: boolean;
@@ -32,26 +27,94 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
     const [emotionalState, setEmotionalState] = useState('');
     const [editId, setEditId] = useState<string | null>(null);
 
+    // Data Subscription & Migration
     useEffect(() => {
-        if (isOpen) {
-            loadMistakes();
-        }
-    }, [isOpen]);
+        // Subscribe to DB updates
+        const subscription = liveQuery(() => db.mistakes.orderBy('date').reverse().toArray())
+            .subscribe(setMistakes);
 
-    const loadMistakes = () => {
-        const saved = localStorage.getItem('financial_mistakes');
-        if (saved) {
-            try {
-                setMistakes(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to load mistakes", e);
+        // Migration Check: If DB is empty but localStorage has data, migrate it!
+        const migrateData = async () => {
+            const hasData = await db.mistakes.count();
+            if (hasData === 0) {
+                const saved = localStorage.getItem('financial_mistakes');
+                if (saved) {
+                    try {
+                        const legacyMistakes: Mistake[] = JSON.parse(saved);
+                        if (legacyMistakes.length > 0) {
+                            await db.mistakes.bulkAdd(legacyMistakes);
+                            toast.success("Migrated your lessons to the secure database!");
+                            // Optional: Clear localStorage after successful migration
+                            // localStorage.removeItem('financial_mistakes'); 
+                        }
+                    } catch (e) {
+                        console.error("Migration failed", e);
+                    }
+                }
             }
+        };
+        migrateData();
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const saveMistakeToDB = async (mistake: Mistake) => {
+        try {
+            await db.mistakes.put(mistake);
+        } catch (error) {
+            console.error("Failed to save mistake:", error);
+            toast.error("Failed to save. Please try again.");
         }
     };
 
-    const saveMistakes = (newMistakes: Mistake[]) => {
-        localStorage.setItem('financial_mistakes', JSON.stringify(newMistakes));
-        setMistakes(newMistakes);
+    const deleteMistakeFromDB = async (id: string) => {
+        try {
+            await db.mistakes.delete(id);
+        } catch (error) {
+            console.error("Failed to delete mistake:", error);
+        }
+    };
+
+    // Backup & Restore Handlers
+    const handleBackup = () => {
+        const dataStr = JSON.stringify(mistakes, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `MirrorOfTruth_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Lessons backed up successfully!");
+    };
+
+    const handleRestore = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = async (e: any) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const imported = JSON.parse(event.target?.result as string);
+                    if (Array.isArray(imported)) {
+                        if (window.confirm(`Restore ${imported.length} lessons? This will merge with existing ones.`)) {
+                            await db.mistakes.bulkPut(imported); // Use put to overwrite duplicates
+                            toast.success("Lessons restored successfully!");
+                        }
+                    } else {
+                        toast.error("Invalid backup file.");
+                    }
+                } catch (err) {
+                    toast.error("Failed to parse backup file.");
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     };
 
     const handleSubmit = () => {
@@ -72,13 +135,11 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
 
         if (editId) {
             // Update existing
-            const updated = mistakes.map(m => m.id === editId ? mistakeData : m);
-            saveMistakes(updated);
+            saveMistakeToDB(mistakeData);
             toast.success("Reflection updated.");
         } else {
             // Create new
-            const updated = [mistakeData, ...mistakes];
-            saveMistakes(updated);
+            saveMistakeToDB(mistakeData);
             toast.success("Reflection logged. Pain is the best teacher.");
         }
 
@@ -88,10 +149,9 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        console.log("Deleting mistake:", id);
+        if (import.meta.env.DEV) console.log("Deleting mistake:", id);
         if (window.confirm('Forget this mistake? (Not recommended unless erroneous entry)')) {
-            const updated = mistakes.filter(m => m.id !== id);
-            saveMistakes(updated);
+            deleteMistakeFromDB(id);
             toast.success("Mistake deleted.");
         }
     };
@@ -159,12 +219,28 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
                                 <h3 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                     <BookOpen size={18} /> Lesson Archive
                                 </h3>
-                                <button
-                                    onClick={() => setView('new')}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-md flex items-center gap-2 transition-transform active:scale-95"
-                                >
-                                    <Plus size={16} /> Log New Mistake
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleBackup}
+                                        className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                                        title="Backup Lessons to File"
+                                    >
+                                        <Download size={14} /> Backup
+                                    </button>
+                                    <button
+                                        onClick={handleRestore}
+                                        className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                                        title="Restore Lessons from File"
+                                    >
+                                        <Upload size={14} /> Restore
+                                    </button>
+                                    <button
+                                        onClick={() => setView('new')}
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-md flex items-center gap-2 transition-transform active:scale-95 ml-2"
+                                    >
+                                        <Plus size={16} /> Log New Mistake
+                                    </button>
+                                </div>
                             </div>
 
                             {/* List */}

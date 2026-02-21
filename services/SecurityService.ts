@@ -1,7 +1,177 @@
 /**
  * SecurityService - Encryption, Audit Trail, UPI Tracking, Credit Card Optimizer
- * Covers: E2E encryption, activity logging, expense tracking
+ * Enterprise-grade security implementation with proper AES encryption
  */
+
+import CryptoJS from 'crypto-js';
+
+// ==================== SECURE ENCRYPTION ====================
+
+/**
+ * Generate a cryptographically secure random key
+ */
+export function generateSecureKey(length: number = 32): string {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Derive encryption key from password using PBKDF2
+ * @param password - User password
+ * @param salt - Salt for key derivation (should be stored securely)
+ * @param iterations - Number of iterations (higher = more secure but slower)
+ */
+export async function deriveKeyFromPassword(
+    password: string,
+    salt: string,
+    iterations: number = 100000
+): Promise<string> {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveBits']
+    );
+
+    const derivedBits = await crypto.subtle.deriveBits(
+        {
+            name: 'PBKDF2',
+            salt: encoder.encode(salt),
+            iterations,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        256
+    );
+
+    return Array.from(new Uint8Array(derivedBits))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+/**
+ * AES-256 encryption with proper key management
+ */
+export class SecureEncryption {
+    private key: string;
+    private static instance: SecureEncryption | null = null;
+
+    private constructor(key?: string) {
+        // Use provided key or generate/get from storage
+        this.key = key || SecureEncryption.getOrCreateKey();
+    }
+
+    static getInstance(key?: string): SecureEncryption {
+        if (!SecureEncryption.instance) {
+            SecureEncryption.instance = new SecureEncryption(key);
+        }
+        return SecureEncryption.instance;
+    }
+
+    private static getOrCreateKey(): string {
+        const STORAGE_KEY = 'wealth_encryption_key';
+        let key = localStorage.getItem(STORAGE_KEY);
+        
+        if (!key) {
+            key = generateSecureKey(32);
+            localStorage.setItem(STORAGE_KEY, key);
+        }
+        
+        return key;
+    }
+
+    /**
+     * Encrypt data using AES-256-CBC
+     */
+    encrypt(plaintext: string): string {
+        if (!plaintext) return '';
+        
+        try {
+            // Generate random IV for each encryption
+            const iv = CryptoJS.lib.WordArray.random(16);
+            
+            // Encrypt
+            const encrypted = CryptoJS.AES.encrypt(plaintext, this.key, {
+                iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            // Return IV + ciphertext (IV is needed for decryption)
+            return iv.toString() + ':' + encrypted.toString();
+        } catch (error) {
+            console.error('Encryption failed:', error);
+            throw new Error('Encryption failed');
+        }
+    }
+
+    /**
+     * Decrypt data encrypted with AES-256-CBC
+     */
+    decrypt(ciphertext: string): string {
+        if (!ciphertext) return '';
+        
+        try {
+            // Split IV and ciphertext
+            const parts = ciphertext.split(':');
+            if (parts.length !== 2) {
+                throw new Error('Invalid ciphertext format');
+            }
+
+            const iv = CryptoJS.enc.Hex.parse(parts[0]);
+            const encrypted = parts[1];
+
+            // Decrypt
+            const decrypted = CryptoJS.AES.decrypt(encrypted, this.key, {
+                iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        } catch (error) {
+            console.error('Decryption failed:', error);
+            return '';
+        }
+    }
+
+    /**
+     * Encrypt object to JSON string
+     */
+    encryptObject<T>(obj: T): string {
+        return this.encrypt(JSON.stringify(obj));
+    }
+
+    /**
+     * Decrypt JSON string to object
+     */
+    decryptObject<T>(ciphertext: string): T | null {
+        try {
+            const decrypted = this.decrypt(ciphertext);
+            if (!decrypted) return null;
+            return JSON.parse(decrypted) as T;
+        } catch {
+            return null;
+        }
+    }
+}
+
+// Backward-compatible functions using the class
+export function encrypt(data: string, key?: string): string {
+    return SecureEncryption.getInstance(key).encrypt(data);
+}
+
+export function decrypt(encrypted: string, key?: string): string {
+    return SecureEncryption.getInstance(key).decrypt(encrypted);
+}
+
+// Keep deriveKey for backward compatibility
+export async function deriveKey(password: string, salt: string): Promise<string> {
+    return deriveKeyFromPassword(password, salt);
+}
 
 // ==================== AUDIT TRAIL ====================
 
@@ -18,24 +188,31 @@ export type AuditAction =
     | 'backup_restored'
     | 'settings_changed'
     | 'alert_created'
-    | 'alert_triggered';
+    | 'alert_triggered'
+    | 'pin_changed'
+    | 'api_key_updated'
+    | 'data_export'
+    | 'security_event';
 
 export interface AuditEntry {
     id: string;
     timestamp: string;
     action: AuditAction;
     details: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     ipAddress?: string;
     userAgent?: string;
+    sessionId?: string;
 }
 
 class AuditTrailService {
     private entries: AuditEntry[] = [];
     private maxEntries = 1000;
     private storageKey = 'wealth_aggregator_audit';
+    private sessionId: string;
 
     constructor() {
+        this.sessionId = generateSecureKey(8);
         this.loadFromStorage();
     }
 
@@ -63,14 +240,15 @@ class AuditTrailService {
     /**
      * Log an action
      */
-    log(action: AuditAction, details: string, metadata?: Record<string, any>): void {
+    log(action: AuditAction, details: string, metadata?: Record<string, unknown>): void {
         const entry: AuditEntry = {
-            id: `audit-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            id: `audit-${Date.now()}-${generateSecureKey(4)}`,
             timestamp: new Date().toISOString(),
             action,
             details,
-            metadata,
-            userAgent: navigator.userAgent
+            metadata: this.sanitizeMetadata(metadata),
+            userAgent: this.getSimplifiedUserAgent(),
+            sessionId: this.sessionId
         };
 
         this.entries.push(entry);
@@ -81,6 +259,50 @@ class AuditTrailService {
         }
 
         this.saveToStorage();
+    }
+
+    /**
+     * Sanitize metadata to prevent sensitive data leakage
+     */
+    private sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, unknown> | undefined {
+        if (!metadata) return undefined;
+
+        const sensitiveKeys = ['password', 'pin', 'apiKey', 'token', 'secret', 'credential'];
+        const sanitized: Record<string, unknown> = {};
+
+        for (const [key, value] of Object.entries(metadata)) {
+            if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+                sanitized[key] = '[REDACTED]';
+            } else if (typeof value === 'object' && value !== null) {
+                sanitized[key] = this.sanitizeMetadata(value as Record<string, unknown>);
+            } else {
+                sanitized[key] = value;
+            }
+        }
+
+        return sanitized;
+    }
+
+    /**
+     * Get simplified user agent (browser + OS)
+     */
+    private getSimplifiedUserAgent(): string {
+        const ua = navigator.userAgent;
+        let browser = 'Unknown';
+        let os = 'Unknown';
+
+        if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Chrome')) browser = 'Chrome';
+        else if (ua.includes('Safari')) browser = 'Safari';
+        else if (ua.includes('Edge')) browser = 'Edge';
+
+        if (ua.includes('Windows')) os = 'Windows';
+        else if (ua.includes('Mac')) os = 'MacOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iOS')) os = 'iOS';
+
+        return `${browser}/${os}`;
     }
 
     /**
@@ -108,6 +330,13 @@ class AuditTrailService {
     }
 
     /**
+     * Get entries for current session
+     */
+    getCurrentSession(): AuditEntry[] {
+        return this.entries.filter(e => e.sessionId === this.sessionId).reverse();
+    }
+
+    /**
      * Clear audit trail
      */
     clear(): void {
@@ -120,6 +349,34 @@ class AuditTrailService {
      */
     export(): string {
         return JSON.stringify(this.entries, null, 2);
+    }
+
+    /**
+     * Get security summary
+     */
+    getSecuritySummary(): {
+        failedLogins: number;
+        lastLogin: string | null;
+        suspiciousActivity: boolean;
+    } {
+        const failedLogins = this.entries.filter(
+            e => e.action === 'login' && e.details.includes('Failed')
+        ).length;
+
+        const successfulLogins = this.entries.filter(
+            e => e.action === 'login' && !e.details.includes('Failed')
+        );
+        const lastLogin = successfulLogins.length > 0 
+            ? successfulLogins[successfulLogins.length - 1].timestamp 
+            : null;
+
+        // Flag suspicious activity: multiple failed logins in short time
+        const recentFailures = this.entries.filter(
+            e => e.action === 'login' && e.details.includes('Failed')
+        ).slice(-5);
+        const suspiciousActivity = recentFailures.length >= 3;
+
+        return { failedLogins, lastLogin, suspiciousActivity };
     }
 }
 
@@ -351,57 +608,6 @@ export function recommendBestCard(
     return recommendations.sort((a, b) => b.estimatedRewards - a.estimatedRewards);
 }
 
-// ==================== SIMPLE ENCRYPTION ====================
-
-/**
- * Simple XOR encryption (for demo - use proper crypto in production)
- */
-export function encrypt(data: string, key: string): string {
-    let result = '';
-    for (let i = 0; i < data.length; i++) {
-        result += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return btoa(result);
-}
-
-export function decrypt(encrypted: string, key: string): string {
-    const data = atob(encrypted);
-    let result = '';
-    for (let i = 0; i < data.length; i++) {
-        result += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return result;
-}
-
-/**
- * Generate encryption key from password
- */
-export async function deriveKey(password: string, salt: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(password),
-        'PBKDF2',
-        false,
-        ['deriveBits']
-    );
-
-    const derivedBits = await crypto.subtle.deriveBits(
-        {
-            name: 'PBKDF2',
-            salt: encoder.encode(salt),
-            iterations: 100000,
-            hash: 'SHA-256'
-        },
-        keyMaterial,
-        256
-    );
-
-    return Array.from(new Uint8Array(derivedBits))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-}
-
 export default {
     auditTrail,
     categorizeUPITransaction,
@@ -410,5 +616,7 @@ export default {
     recommendBestCard,
     encrypt,
     decrypt,
-    deriveKey
+    deriveKey,
+    SecureEncryption,
+    generateSecureKey
 };

@@ -4,7 +4,7 @@ import {
     LayoutDashboard, BookOpen, Library, Plus,
     Calendar as CalendarIcon, ShieldAlert, Snowflake, Grid, CheckSquare, X
 } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 import { db, Trade, DailyReview, calculatePnL } from '../database';
 import { calculateStreaks } from '../utils/helpers';
 
@@ -14,14 +14,14 @@ import JournalCalendarView from './journal/JournalCalendarView';
 import PlaybookGallery from './journal/PlaybookGallery';
 import AddTradeModal from './AddTradeModal';
 import DailyReviewModal from './journal/DailyReviewModal';
-import MistakesReflectorModal from './journal/MistakesReflectorModal';
+import MistakesReflector from './journal/MistakesReflector';
 import SlumpBusterModal from './journal/SlumpBusterModal';
 import JournalCommandCenter from './journal/JournalCommandCenter';
 import { AnimatedToggle } from './ui/AnimatedToggle';
 import { PreTradeChecklist } from './journal/PreTradeChecklist';
 import { WhatIfScenarioBuilder } from './journal/WhatIfScenarioBuilder';
 
-type ViewMode = 'ANALYTICS' | 'JOURNAL' | 'PLAYBOOK';
+type ViewMode = 'ANALYTICS' | 'JOURNAL' | 'PLAYBOOK' | 'MIRROR';
 
 const PsychDashboard: React.FC = () => {
     // View State
@@ -31,7 +31,7 @@ const PsychDashboard: React.FC = () => {
     // Modal State
     const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
     const [isDailyReviewModalOpen, setIsDailyReviewModalOpen] = useState(false);
-    const [isReflectorOpen, setIsReflectorOpen] = useState(false);
+    // Reflector is now a ViewMode ('MIRROR')
     const [isSlumpBusterOpen, setIsSlumpBusterOpen] = useState(false);
 
     // Checklist Sidebar State (New Feature)
@@ -54,9 +54,18 @@ const PsychDashboard: React.FC = () => {
     const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
     const [ignoredMistakes, setIgnoredMistakes] = useState<string[]>([]);
 
-    // Data Fetching
-    const rawTrades = useLiveQuery(() => db.trades.toArray()) || [];
-    const dailyReviews = useLiveQuery(() => db.daily_reviews.toArray()) || [];
+    // Data Fetching (React 19 compatible - manual subscriptions)
+    const [rawTrades, setRawTrades] = useState<Trade[]>([]);
+    const [dailyReviews, setDailyReviews] = useState<DailyReview[]>([]);
+
+    useEffect(() => {
+        const subTrades = liveQuery(() => db.trades.toArray()).subscribe(setRawTrades);
+        const subReviews = liveQuery(() => db.daily_reviews.toArray()).subscribe(setDailyReviews);
+        return () => {
+            subTrades.unsubscribe();
+            subReviews.unsubscribe();
+        };
+    }, []);
 
     // Enriched Trades (PnL & Risk)
     const trades = useMemo(() => {
@@ -105,6 +114,11 @@ const PsychDashboard: React.FC = () => {
         }
     }, [slumpStats.currentLoseStreak]);
 
+    // Full Page View: Mirror of Truth
+    if (viewMode === 'MIRROR') {
+        return <MistakesReflector onBack={() => setViewMode('ANALYTICS')} />;
+    }
+
     return (
         // REFACTOR 1: Reduced Padding & Full Width
         <div className="min-h-screen text-slate-200 p-4 font-sans selection:bg-indigo-500/30">
@@ -127,7 +141,7 @@ const PsychDashboard: React.FC = () => {
                             >
                                 {viewMode === tab.id && (
                                     <motion.div
-                                        layoutId="activeTab"
+                                        layoutId="psychActiveTab"
                                         className="absolute inset-0 bg-indigo-600 rounded-xl shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)]"
                                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                     />
@@ -168,7 +182,7 @@ const PsychDashboard: React.FC = () => {
 
                     {/* Mistake Reflector */}
                     <button
-                        onClick={() => setIsReflectorOpen(true)}
+                        onClick={() => setViewMode('MIRROR')}
                         className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl border border-rose-500/20 transition-colors"
                         title="Reflect on Mistakes"
                     >
@@ -264,7 +278,7 @@ const PsychDashboard: React.FC = () => {
                 {isChecklistOpen && (
                     <>
                         <div
-                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 cursor-pointer"
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] cursor-pointer"
                             onClick={() => setIsChecklistOpen(false)}
                         />
                         <motion.div
@@ -272,7 +286,7 @@ const PsychDashboard: React.FC = () => {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="fixed top-0 right-0 h-screen w-full md:w-[450px] bg-slate-950 border-l border-slate-800 z-50 shadow-2xl flex flex-col"
+                            className="fixed top-0 right-0 h-screen w-full md:w-[450px] bg-slate-950 border-l border-slate-800 z-[100] shadow-2xl flex flex-col"
                         >
                             <div className="p-4 border-b border-slate-800 flex justify-between items-center">
                                 <span className="font-bold text-lg text-white flex items-center gap-2">
@@ -307,10 +321,7 @@ const PsychDashboard: React.FC = () => {
                 onSave={() => {/* Auto-updates via liveQuery */ }}
             />
 
-            <MistakesReflectorModal
-                isOpen={isReflectorOpen}
-                onClose={() => setIsReflectorOpen(false)}
-            />
+
 
             <SlumpBusterModal
                 isOpen={isSlumpBusterOpen}

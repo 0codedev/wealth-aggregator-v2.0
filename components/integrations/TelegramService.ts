@@ -14,17 +14,17 @@ export const TelegramBot = {
     config: null as TelegramConfig | null,
 
     async connect(botToken: string, chatId: string): Promise<boolean> {
-        console.log('[TelegramBot] Connection not implemented - placeholder');
+        if (import.meta.env.DEV) console.log('[TelegramBot] Connection not implemented - placeholder');
         return false;
     },
 
     async sendMessage(message: string): Promise<boolean> {
-        console.log('[TelegramBot] Send message not implemented:', message);
+        if (import.meta.env.DEV) console.log('[TelegramBot] Send message not implemented:', message);
         return false;
     },
 
     async sendAlert(title: string, body: string): Promise<boolean> {
-        console.log('[TelegramBot] Send alert not implemented:', title, body);
+        if (import.meta.env.DEV) console.log('[TelegramBot] Send alert not implemented:', title, body);
         return false;
     },
 

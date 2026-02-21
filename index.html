@@ -5,6 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Wealth Aggregator - AI-Powered Portfolio Management</title>
     
+    <!-- Security Headers (Meta Tags) -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://fonts.googleapis.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com wss://*.googleapis.com;
+      media-src 'self' blob:;
+      object-src 'none';
+      frame-src 'none';
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self';
+    " />
+    
+    <!-- Permissions Policy -->
+    <meta http-equiv="Permissions-Policy" content="
+      camera=(),
+      microphone=(self),
+      geolocation=(),
+      payment=(),
+      usb=(),
+      interest-cohort=()
+    " />
+    
     <!-- PWA Meta Tags -->
     <meta name="description" content="Premium AI-powered wealth management, trade journaling, and portfolio tracking platform" />
     <meta name="theme-color" content="#6366f1" />
@@ -12,9 +44,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="WealthAgg" />
     
+    <!-- SEO Meta Tags -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -82,6 +123,28 @@
           document.documentElement.classList.add('dark'); // Safe default
         }
       })();
+      
+      // Security: Disable right-click in production (optional)
+      // document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+      
+      // Security: Warn if DevTools open (development aid)
+      (function() {
+        var devtools = { open: false };
+        var threshold = 160;
+        
+        setInterval(function() {
+          if (window.outerHeight - window.innerHeight > threshold || 
+              window.outerWidth - window.innerWidth > threshold) {
+            if (!devtools.open) {
+              devtools.open = true;
+              console.log('%c⚠️ Security Notice', 'color: red; font-size: 20px; font-weight: bold;');
+              console.log('%cThis is a development tool. Be careful with any code you paste here.', 'color: orange; font-size: 14px;');
+            }
+          } else {
+            devtools.open = false;
+          }
+        }, 500);
+      })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -118,12 +181,37 @@
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
+      
+      /* Loading spinner animation */
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      
+      /* Prevent text selection on UI elements */
+      .no-select {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
     </style>
 
 <link rel="stylesheet" href="/index.css">
 </head>
   <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300">
     <div id="root"></div>
+    
+    <!-- Fallback for JavaScript disabled -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: sans-serif;">
+        <h1>JavaScript Required</h1>
+        <p>Wealth Aggregator requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
+      </div>
+    </noscript>
+    
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

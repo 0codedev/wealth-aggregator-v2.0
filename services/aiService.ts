@@ -1,38 +1,54 @@
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 import { logger } from "./Logger";
 import { ChatPart } from "../types/ai";
+import { secureApiKeyStorage } from "../utils/Encryption";
 
 // --- API CONFIG ---
 const API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /**
- * Gets the Gemini API key from localStorage or environment variables.
+ * Gets the Gemini API key from secure storage or environment variables.
  * SECURITY: Never hardcode API keys - they get exposed in production bundles.
  * 
  * Priority:
- * 1. localStorage (user-provided via Settings)
- * 2. Environment variable (VITE_GEMINI_API_KEY)
+ * 1. Secure encrypted storage (most secure)
+ * 2. Zustand Settings Store
+ * 3. Legacy localStorage key
+ * 4. Environment variable (VITE_GEMINI_API_KEY)
  * 
  * @throws Error if no API key is configured
  */
 const getApiKey = (): string => {
     let apiKey: string | null | undefined = null;
 
-    // 1. PRIMARY: Try Zustand Settings Store (where LogicConfigModal saves)
+    // 1. PRIMARY: Try secure encrypted storage
     try {
-        const storeData = localStorage.getItem('wealth-aggregator-logic');
-        if (storeData) {
-            const parsed = JSON.parse(storeData);
-            if (parsed.state?.geminiApiKey) {
-                apiKey = parsed.state.geminiApiKey.trim();
-                logger.debug('AI Service: Using API Key from Settings Store', undefined, 'AIService');
-            }
+        const secureKey = secureApiKeyStorage.get<string>();
+        if (secureKey) {
+            apiKey = secureKey.trim();
+            logger.debug('AI Service: Using API Key from secure storage', undefined, 'AIService');
         }
     } catch (e) {
-        logger.warn('AI Service: Unable to read from settings store');
+        logger.warn('AI Service: Unable to read from secure storage');
     }
 
-    // 2. FALLBACK: Legacy localStorage key (used by ApiKeyManager)
+    // 2. FALLBACK: Try Zustand Settings Store (where LogicConfigModal saves)
+    if (!apiKey) {
+        try {
+            const storeData = localStorage.getItem('wealth-aggregator-logic');
+            if (storeData) {
+                const parsed = JSON.parse(storeData);
+                if (parsed.state?.geminiApiKey) {
+                    apiKey = parsed.state.geminiApiKey.trim();
+                    logger.debug('AI Service: Using API Key from Settings Store', undefined, 'AIService');
+                }
+            }
+        } catch (e) {
+            logger.warn('AI Service: Unable to read from settings store');
+        }
+    }
+
+    // 3. FALLBACK: Legacy localStorage key (used by ApiKeyManager)
     if (!apiKey) {
         try {
             apiKey = localStorage.getItem('gemini-api-key');
@@ -41,7 +57,7 @@ const getApiKey = (): string => {
         }
     }
 
-    // 3. LAST RESORT: Environment Variables (Vite)
+    // 4. LAST RESORT: Environment Variables (Vite)
     if (!apiKey) {
         try {
             // @ts-ignore - Vite injects import.meta.env at build time
@@ -53,7 +69,7 @@ const getApiKey = (): string => {
         }
     }
 
-    // 4. No key found - throw helpful error
+    // 5. No key found - throw helpful error
     if (!apiKey) {
         throw new Error(
             'API_KEY_MISSING: No Gemini API key configured. ' +
@@ -292,7 +308,7 @@ export class LiveVoiceSession {
                         scriptProcessor.connect(this.inputContext.destination);
                     },
                     onmessage: async (msg: LiveServerMessage) => {
-                        const base64Audio = msg.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+                        const base64Audio = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                         if (base64Audio && this.outputContext) {
                             this.nextStartTime = Math.max(this.nextStartTime, this.outputContext.currentTime);
                             try {
@@ -318,7 +334,7 @@ export class LiveVoiceSession {
             });
         };
 
-        let sessionPromise;
+        let sessionPromise: Promise<any>;
         try {
             logger.info("Gemini Live: Attempting gemini-2.5-flash...");
             sessionPromise = connectSession('gemini-2.5-flash');

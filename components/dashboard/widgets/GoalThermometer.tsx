@@ -32,18 +32,18 @@ export const GoalThermometer: React.FC<GoalThermometerProps> = ({ currentNetWort
     const monthlySavingsNeeded = gap > 0 ? gap / monthsRemaining : 0;
 
     return (
-        <div className="h-full bg-slate-950 border border-slate-800 rounded-2xl p-5 relative overflow-hidden group flex flex-col hover:border-cyan-500/30 transition-colors duration-500">
+        <div className="h-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 relative overflow-hidden group flex flex-col hover:border-cyan-500/30 transition-colors duration-500">
             {/* Background Sky */}
-            <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 to-slate-950 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/50 dark:from-cyan-950/20 to-white dark:to-slate-950 pointer-events-none" />
 
             {/* Header */}
             <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-cyan-950/50 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-lg shadow-cyan-900/10">
+                    <div className="w-10 h-10 bg-cyan-50 dark:bg-cyan-950/50 rounded-xl flex items-center justify-center border border-cyan-200 dark:border-cyan-500/20 shadow-lg shadow-cyan-100 dark:shadow-cyan-900/10">
                         <Rocket size={20} className="text-cyan-400" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-wider">Ascension</h3>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Ascension</h3>
                         <p className="text-[10px] text-cyan-400/80 font-mono">Goal Tracker</p>
                     </div>
                 </div>
@@ -57,7 +57,7 @@ export const GoalThermometer: React.FC<GoalThermometerProps> = ({ currentNetWort
             <div className="flex-1 flex gap-4 relative z-10">
                 {/* Vertical Tracker */}
                 <div className="w-10 relative">
-                    <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1.5 bg-slate-800 rounded-full" />
+                    <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1.5 bg-slate-200 dark:bg-slate-800 rounded-full" />
                     {/* Fill */}
                     <div
                         className="absolute left-1/2 -translate-x-1/2 bottom-0 w-1.5 bg-gradient-to-t from-cyan-600 to-blue-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)] transition-all duration-1000"
@@ -75,7 +75,7 @@ export const GoalThermometer: React.FC<GoalThermometerProps> = ({ currentNetWort
                     </div>
 
                     {/* Top Flag */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border border-slate-700 p-1 rounded z-10">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-1 rounded z-10">
                         <Flag size={10} className="text-amber-400 fill-current" />
                     </div>
                 </div>
@@ -83,16 +83,16 @@ export const GoalThermometer: React.FC<GoalThermometerProps> = ({ currentNetWort
                 {/* Metrics */}
                 <div className="flex-1 flex flex-col justify-between py-1">
                     {/* Gap Analysis */}
-                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-1">
                             <span className="text-[9px] text-slate-500 font-bold uppercase">To Go</span>
                             <span className="text-[9px] text-slate-500 font-mono">{monthsRemaining} mos left</span>
                         </div>
-                        <p className="text-lg font-bold text-white font-mono">{formatCurrency(gap)}</p>
+                        <p className="text-lg font-bold text-slate-800 dark:text-white font-mono">{formatCurrency(gap)}</p>
                     </div>
 
                     {/* Required Rate */}
-                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2 mb-1">
                             <TrendingUp size={12} className="text-emerald-400" />
                             <span className="text-[9px] text-slate-500 font-bold uppercase">Req. Monthly</span>

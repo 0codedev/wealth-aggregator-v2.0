@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 import {
     Bell, Plus, Trash2, Target, TrendingDown, Calendar,
     AlertCircle, Check, X, ChevronDown, ChevronUp, Settings
@@ -34,9 +34,14 @@ export const SmartAlertsManager: React.FC<SmartAlertsManagerProps> = ({ investme
     });
 
     // Fetch all alerts
-    const alerts = useLiveQuery(() =>
-        db.alerts.orderBy('createdAt').reverse().toArray()
-    ) || [];
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+
+    React.useEffect(() => {
+        const subscription = liveQuery(() =>
+            db.alerts.orderBy('createdAt').reverse().toArray()
+        ).subscribe(setAlerts);
+        return () => subscription.unsubscribe();
+    }, []);
 
     const activeAlerts = useMemo(() => alerts.filter(a => a.isActive), [alerts]);
     const triggeredAlerts = useMemo(() => alerts.filter(a => a.triggeredAt), [alerts]);

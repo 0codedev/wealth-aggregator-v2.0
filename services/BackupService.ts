@@ -9,7 +9,6 @@ const STORAGE_KEYS = [
   'wealth-aggregator-logic',
   'wealth-aggregator-paper-trader',
   // Added Backup Keys (Audit Fix)
-  'financial_mistakes',        // Mirror of Truth
   'advisor_chat_history',      // AI Advisor Chat
   'advisor_report_data',       // AI Advisor Reports
   'rebalance-targets',         // Strategy Rebalancing Config

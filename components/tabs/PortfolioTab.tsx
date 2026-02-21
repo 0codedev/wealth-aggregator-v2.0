@@ -22,6 +22,9 @@ import { useFamily } from '../../contexts/FamilyContext';
 const AssetSimulatorModal = React.lazy(() => import('../AssetSimulatorModal'));
 const XRayModal = React.lazy(() => import('./portfolio/XRayModal').then(module => ({ default: module.XRayModal })));
 const RebalancingTool = React.lazy(() => import('../tools/RebalancingTool').then(module => ({ default: module.RebalancingTool })));
+const BookProfitModal = React.lazy(() => import('../modals/BookProfitModal').then(module => ({ default: module.BookProfitModal }))); // NEW
+
+import { db, RealizedTransaction } from '../../database'; // Import DB
 
 // Type-safe Portfolio Stats interface
 interface PortfolioStats {
@@ -66,6 +69,9 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
     const [isCompareOpen, setIsCompareOpen] = useState(false);
     const [isXRayOpen, setIsXRayOpen] = useState(false);
 
+    // Profit Booking State
+    const [bookingProfitAsset, setBookingProfitAsset] = useState<Investment | null>(null);
+
     const [selectedForCompare, setSelectedForCompare] = useState<Investment[]>([]);
 
     // Undo Delete State
@@ -81,36 +87,149 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tab: string } | null>(null);
 
-    // Filter Logic moved to App.tsx Global State
-    // const filteredInvestments = ...
-    // Filter Logic moved to App.tsx Global State
-    // const filteredInvestments = ...
-    // Optimistic Delete: Exclude pending deletes
-    const filteredInvestments = useMemo(() =>
-        investments.filter(inv => !pendingDeletes.has(inv.id)),
+    // Split Active vs Archived
+    const activeInvestments = useMemo(() =>
+        investments.filter(inv => inv.status !== 'ARCHIVED' && !pendingDeletes.has(inv.id)),
         [investments, pendingDeletes]);
 
+    const archivedInvestments = useMemo(() =>
+        investments.filter(inv => inv.status === 'ARCHIVED' && !pendingDeletes.has(inv.id)),
+        [investments, pendingDeletes]);
 
-    // Memoized handlers
+    // Use active investments for searching/filtering in tabs
+    const filteredInvestments = useMemo(() =>
+        activeInvestments.filter(inv => !pendingDeletes.has(inv.id)),
+        [activeInvestments, pendingDeletes]);
+
+
+    // Smart SIP Verification Handler
     const handleAutoSip = useCallback(() => {
         if (!onQuickUpdate) return;
-        let sipCount = 0;
 
-        filteredInvestments.forEach(inv => {
-            if (inv.recurring?.isEnabled && inv.recurring.amount > 0) {
-                const newCurrent = inv.currentValue + inv.recurring.amount;
-                const newInvested = inv.investedAmount + inv.recurring.amount;
+        // Calculate expected vs applied installments for each SIP
+        const sipAssets = filteredInvestments.filter(inv =>
+            inv.recurring?.isEnabled && inv.recurring.amount > 0
+        );
+
+        if (sipAssets.length === 0) {
+            toast.info('No active SIPs found.');
+            return;
+        }
+
+        const today = new Date();
+        const todayDay = today.getDate();
+        let totalMissed = 0;
+        let totalPending = 0;
+        let sipsCaughtUp = 0;
+
+        sipAssets.forEach(inv => {
+            const recurring = inv.recurring!;
+            const sipDay = recurring.sipDay || 5;
+            const startDate = recurring.startDate || inv.lastUpdated;
+            const appliedInstallments = recurring.installmentsApplied || 0;
+
+            // Calculate expected installments since start date
+            const start = new Date(startDate);
+            const startYear = start.getFullYear();
+            const startMonth = start.getMonth();
+            const todayYear = today.getFullYear();
+            const todayMonth = today.getMonth();
+
+            let expectedInstallments = 0;
+            const totalMonths = (todayYear - startYear) * 12 + (todayMonth - startMonth);
+
+            for (let m = 0; m <= totalMonths; m++) {
+                const checkDate = new Date(startYear, startMonth + m, sipDay);
+                if (checkDate <= today) {
+                    if (m === 0 && start.getDate() > sipDay) continue;
+                    expectedInstallments++;
+                }
+            }
+
+            const missedInstallments = Math.max(0, expectedInstallments - appliedInstallments);
+
+            if (missedInstallments > 0) {
+                totalMissed += missedInstallments;
+                totalPending += missedInstallments * recurring.amount;
+
+                // Apply all missed installments
+                const totalToAdd = missedInstallments * recurring.amount;
                 onQuickUpdate(inv.id, {
-                    currentValue: newCurrent,
-                    investedAmount: newInvested
+                    currentValue: inv.currentValue + totalToAdd,
+                    investedAmount: inv.investedAmount + totalToAdd,
+                    recurring: {
+                        ...recurring,
+                        installmentsApplied: expectedInstallments
+                    }
                 });
-                sipCount++;
+                sipsCaughtUp++;
             }
         });
 
-        if (sipCount > 0) toast.success(`Auto - SIP executed for ${sipCount} asset${sipCount > 1 ? 's' : ''} !`);
-        else toast.info('No active SIPs found.');
+        if (totalMissed > 0) {
+            const formattedAmount = new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(totalPending);
+
+            toast.success(
+                `✅ Caught up ${sipsCaughtUp} SIP${sipsCaughtUp > 1 ? 's' : ''}: ${totalMissed} installment${totalMissed > 1 ? 's' : ''} (${formattedAmount}) applied!`,
+                { duration: 5000 }
+            );
+        } else {
+            toast.success(`✅ All ${sipAssets.length} SIP${sipAssets.length > 1 ? 's' : ''} are up to date!`);
+        }
     }, [filteredInvestments, onQuickUpdate, toast]);
+
+    // Realized Profit State
+    const [realizedPlMap, setRealizedPlMap] = useState<Record<string, { pl: number, cost: number }>>({});
+
+    const fetchRealizedTransactions = useCallback(async () => {
+        try {
+            const txs = await db.realized_transactions.toArray();
+            const map: Record<string, { pl: number, cost: number }> = {};
+
+            txs.forEach(tx => {
+                if (!map[tx.investmentId]) {
+                    map[tx.investmentId] = { pl: 0, cost: 0 };
+                }
+                map[tx.investmentId].pl += tx.realizedPL;
+                map[tx.investmentId].cost += tx.costBasis;
+            });
+            setRealizedPlMap(map);
+        } catch (error) {
+            console.error("Failed to fetch realized transactions", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRealizedTransactions();
+    }, [fetchRealizedTransactions]);
+
+    const handleConfirmBookProfit = async (transaction: Omit<RealizedTransaction, 'id'>, updatedInvestment: Partial<Investment>) => {
+        if (!onQuickUpdate || !bookingProfitAsset) return;
+
+        try {
+            // 1. Save Transaction to DB
+            await db.realized_transactions.add(transaction as RealizedTransaction);
+
+            // 2. Update Investment (this updates App state and DB via App's handler)
+            onQuickUpdate(bookingProfitAsset.id, updatedInvestment);
+
+            // 3. Refresh Realized Stats
+            fetchRealizedTransactions();
+
+            toast.success(
+                transaction.type === 'FULL_EXIT'
+                    ? `Profit booked! ${bookingProfitAsset.name} moved to Archive.`
+                    : `Profit booked for ${bookingProfitAsset.name}`
+            );
+        } catch (error) {
+            console.error("Failed to book profit:", error);
+            toast.error("Failed to record transaction");
+        }
+    };
 
     const downloadCSV = useCallback(() => {
         const headers = ["Name", "Type", "Platform", "Invested", "Current", "Last Updated", "Owner"];
@@ -319,24 +438,32 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                     )}
                 </div>
 
-                {/* Content Area with AnimatePresence */}
+                {/* Content Area with Optimized AnimatePresence */}
                 <div className="relative min-h-[400px]">
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="sync" initial={false}>
                         <motion.div
                             key={activeTab}
-                            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-                            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                            exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 400,
+                                damping: 35,
+                                mass: 0.8,
+                            }}
+                            style={{ willChange: 'transform, opacity' }}
                         >
                             {activeTab === 'HOLDINGS' && (
                                 <HoldingsView
                                     investments={filteredInvestments}
-                                    totalAssets={stats.totalAssets}
+                                    archivedInvestments={archivedInvestments}
+                                    totalAssets={stats.totalAssets ?? 0}
                                     onAddAsset={onAddAsset}
                                     onEditAsset={onEditAsset}
                                     onDeleteAsset={handleUndoableDelete}
                                     onQuickUpdate={onQuickUpdate}
+                                    onBookProfit={setBookingProfitAsset}
                                     formatCurrency={formatCurrency}
                                     calculatePercentage={calculatePercentage}
                                     isPrivacyMode={isPrivacyMode}
@@ -347,6 +474,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                                     groupBy={groupBy}
                                     viewMode={viewMode}
                                     isSpotlightEnabled={isSpotlightEnabled}
+                                    realizedPlMap={realizedPlMap}
                                 />
                             )}
 
@@ -375,7 +503,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                             {activeTab === 'PASSIVE_INCOME' && (
                                 <PassiveIncomeView
                                     investments={filteredInvestments}
-                                    totalAssets={stats.totalAssets}
+                                    totalAssets={stats.totalAssets ?? 0}
                                     formatCurrency={formatCurrency}
                                 />
                             )}
@@ -402,6 +530,16 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                     <AssetSimulatorModal
                         investment={simulatorAsset}
                         onClose={() => setSimulatorAsset(null)}
+                    />
+                )}
+
+                {bookingProfitAsset && (
+                    <BookProfitModal
+                        isOpen={!!bookingProfitAsset}
+                        investment={bookingProfitAsset}
+                        onClose={() => setBookingProfitAsset(null)}
+                        onConfirm={handleConfirmBookProfit}
+                        formatCurrency={formatCurrency}
                     />
                 )}
 
@@ -524,3 +662,6 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
 
 // Wrap with React.memo to prevent unnecessary re-renders
 export default React.memo(PortfolioTab);
+
+
+

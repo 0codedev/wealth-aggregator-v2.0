@@ -95,8 +95,8 @@ const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = React.memo(({ alerts }) =
         <div className="space-y-4">
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-2">
-                <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700/50">
-                    <p className="text-2xl font-black text-white">{stats.total}</p>
+                <div className="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-3 text-center border border-slate-200 dark:border-slate-700/50">
+                    <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.total}</p>
                     <p className="text-[10px] text-slate-500 uppercase font-bold">Total</p>
                 </div>
                 <div className="bg-emerald-500/10 rounded-xl p-3 text-center border border-emerald-500/20">
@@ -110,7 +110,7 @@ const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = React.memo(({ alerts }) =
             </div>
 
             {/* Types Breakdown */}
-            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+            <div className="bg-slate-100 dark:bg-slate-800/30 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50">
                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
                     <PieChart size={12} /> By Type
                 </h4>
@@ -119,10 +119,10 @@ const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = React.memo(({ alerts }) =
                         <div key={type} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className={config?.color}>{config?.icon}</span>
-                                <span className="text-xs text-slate-300">{config?.label}</span>
+                                <span className="text-xs text-slate-700 dark:text-slate-300">{config?.label}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
                                         style={{ width: `${(count / stats.total) * 100}%` }}
@@ -138,7 +138,7 @@ const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = React.memo(({ alerts }) =
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+            <div className="bg-slate-100 dark:bg-slate-800/30 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50">
                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
                     <Clock size={12} /> Alert Effectiveness
                 </h4>
@@ -149,14 +149,14 @@ const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = React.memo(({ alerts }) =
                         </p>
                         <p className="text-[9px] text-slate-500">Trigger Rate</p>
                     </div>
-                    <div className="w-px h-8 bg-slate-700" />
+                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
                     <div>
                         <p className="text-lg font-bold text-emerald-400">
                             {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
                         </p>
                         <p className="text-[9px] text-slate-500">Active Rate</p>
                     </div>
-                    <div className="w-px h-8 bg-slate-700" />
+                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
                     <div>
                         <p className="text-lg font-bold text-amber-400">{typeData.length}</p>
                         <p className="text-[9px] text-slate-500">Categories</p>
@@ -248,7 +248,7 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
     const triggeredAlerts = alerts.filter(a => a.isTriggered);
 
     return (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden h-full flex flex-col">
+        <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden h-full flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -256,14 +256,14 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
                         <Bell size={20} className="text-white" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-white">Alerts Engine 2.0</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Alerts Engine 2.0</h3>
                         <p className="text-xs text-slate-500">{activeAlerts.length} active • {triggeredAlerts.length} triggered</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleEnableNotifications}
-                        className={`p-2 rounded-lg transition-colors ${notificationEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        className={`p-2 rounded-lg transition-colors ${notificationEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                         title={notificationEnabled ? 'Notifications enabled' : 'Enable notifications'}
                     >
                         {notificationEnabled ? <BellRing size={16} /> : <BellOff size={16} />}
@@ -280,7 +280,7 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mb-4 p-1 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <div className="flex gap-1 mb-4 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50">
                 {[
                     { id: 'alerts', label: 'Alerts', icon: <Bell size={12} /> },
                     { id: 'templates', label: 'Templates', icon: <Zap size={12} /> },
@@ -291,7 +291,7 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id
                             ? 'bg-amber-500 text-white shadow-lg'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                            : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700/50'
                             }`}
                     >
                         {tab.icon}
@@ -322,18 +322,18 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
                                         className={`flex items-center justify-between p-4 rounded-xl border transition-all ${alert.isTriggered
                                             ? 'bg-amber-500/10 border-amber-500/30'
                                             : alert.isActive
-                                                ? 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
-                                                : 'bg-slate-900/50 border-slate-800/50 opacity-60'
+                                                ? 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-600'
+                                                : 'bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800/50 opacity-60'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${alert.isTriggered ? 'bg-amber-500/20' : 'bg-slate-800'}`}>
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${alert.isTriggered ? 'bg-amber-500/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
                                                 <span className={ALERT_TYPE_CONFIG[alert.type].color}>
                                                     {ALERT_TYPE_CONFIG[alert.type].icon}
                                                 </span>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-white flex items-center gap-2">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                                     {alert.name}
                                                     {alert.isTriggered && (
                                                         <span className="text-[10px] bg-amber-500 text-black px-1.5 py-0.5 rounded font-bold animate-pulse">
@@ -385,10 +385,10 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
                             >
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-bold text-white">Create New Alert</h3>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Create New Alert</h3>
                                     <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-white">
                                         <X size={20} />
                                     </button>
@@ -532,7 +532,7 @@ const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatC
                                 >
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className={`text-${template.color}-400`}>{template.icon}</span>
-                                        <span className="text-xs font-bold text-white">{template.name}</span>
+                                        <span className="text-xs font-bold text-slate-800 dark:text-white">{template.name}</span>
                                     </div>
                                     <p className="text-[9px] text-slate-500">{template.type}</p>
                                 </motion.button>

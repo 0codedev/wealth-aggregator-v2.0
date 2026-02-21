@@ -93,6 +93,20 @@ export interface TaxRecord {
   lastUpdated: string;
 }
 
+export interface RealizedTransaction {
+  id?: number;
+  investmentId: string;
+  assetName: string;
+  type: 'PARTIAL_EXIT' | 'FULL_EXIT';
+  saleDate: string;
+  saleAmount: number;
+  salePrice?: number; // Price per unit if applicable
+  costBasis: number; // The portion of invested amount removed
+  realizedPL: number;
+  realizedPLPercent: number;
+  notes?: string;
+}
+
 // Module 6: Strategy Rulebook
 export interface Strategy {
   id?: number;
@@ -132,6 +146,17 @@ export interface PaperTrade {
   closeDate?: number; // timestamp or ISO? Let's use string for ISO or number for easier sorting. Existing 'date' in trades is string ISO. Let's use string ISO.
   pnl?: number;
   notes?: string;
+}
+
+// Mirror of Truth: Financial Mistakes & Lessons
+export interface Mistake {
+  id: string;
+  date: string;
+  title: string;
+  cost: number;
+  category: 'TRADING' | 'LIFE';
+  lesson: string;
+  emotionalState?: string;
 }
 
 // Legacy Vault: Estate Planning Beneficiaries
@@ -257,6 +282,9 @@ export class TradeDatabase extends Dexie {
   goals!: Table<Goal>;
   friends!: Table<Friend>;
   quiz_progress!: Table<QuizProgress>;
+  realized_transactions!: Table<RealizedTransaction>;
+  mistakes!: Table<Mistake>;
+  cache!: Table<{ id?: number; key: string; data: any; timestamp: number }>;
 
 
   constructor() {
@@ -302,6 +330,21 @@ export class TradeDatabase extends Dexie {
     // Version 20: Academy Persistence
     (this as any).version(20).stores({
       quiz_progress: '++id, userId, totalXP'
+    });
+
+    // Version 21: Realized Transactions (Profit Booking)
+    (this as any).version(21).stores({
+      realized_transactions: '++id, investmentId, type, saleDate'
+    });
+
+    // Version 22: Mirror of Truth Persistence
+    (this as any).version(22).stores({
+      mistakes: 'id, date, category'
+    });
+
+    // Version 23: Macro Data Cache (Master Remediation)
+    (this as any).version(23).stores({
+      cache: '++id, key, timestamp'
     });
 
 

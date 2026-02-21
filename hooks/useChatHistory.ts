@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { db, Conversation, ChatMessage } from '../database';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 
 interface ChatHistoryResult {
     // Conversations list
@@ -42,28 +42,37 @@ export function useChatHistory(): ChatHistoryResult {
     const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Live query for all conversations (sorted by most recent)
-    const conversations = useLiveQuery(
-        () => db.conversations.orderBy('updatedAt').reverse().toArray(),
-        [],
-        []
-    ) ?? [];
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-    // Live query for active conversation
-    const activeConversation = useLiveQuery(
-        () => activeConversationId ? db.conversations.get(activeConversationId) : undefined,
-        [activeConversationId],
-        null
-    ) ?? null;
+    // Live query for all conversations
+    useEffect(() => {
+        const subscription = liveQuery(() => db.conversations.orderBy('updatedAt').reverse().toArray())
+            .subscribe(setConversations);
+        return () => subscription.unsubscribe();
+    }, []);
 
-    // Live query for messages in active conversation
-    const messages = useLiveQuery(
-        () => activeConversationId
-            ? db.chat_messages.where('conversationId').equals(activeConversationId).sortBy('timestamp')
-            : [],
-        [activeConversationId],
-        []
-    ) ?? [];
+    // Live query for active conversation and messages
+    useEffect(() => {
+        if (!activeConversationId) {
+            setActiveConversation(null);
+            setMessages([]);
+            return;
+        }
+
+        const subAc = liveQuery(() => db.conversations.get(activeConversationId))
+            .subscribe(c => setActiveConversation(c || null));
+
+        const subMsg = liveQuery(() =>
+            db.chat_messages.where('conversationId').equals(activeConversationId).sortBy('timestamp')
+        ).subscribe(setMessages);
+
+        return () => {
+            subAc.unsubscribe();
+            subMsg.unsubscribe();
+        };
+    }, [activeConversationId]);
 
     // Create a new conversation
     const createConversation = useCallback(async (persona: string): Promise<number> => {

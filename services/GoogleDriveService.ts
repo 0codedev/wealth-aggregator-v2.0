@@ -86,7 +86,11 @@ export const signInToGoogle = (): Promise<string> => {
                 reject(new Error(response.error));
             } else {
                 accessToken = response.access_token;
-                resolve(accessToken);
+                if (accessToken) {
+                    resolve(accessToken);
+                } else {
+                    reject(new Error('No access token received'));
+                }
             }
         };
 
@@ -102,7 +106,7 @@ export const signOutFromGoogle = (): void => {
     if (accessToken) {
         google.accounts.oauth2.revoke(accessToken, () => {
             accessToken = null;
-            console.log('Signed out from Google Drive');
+            if (import.meta.env.DEV) console.log('Signed out from Google Drive');
         });
     }
 };

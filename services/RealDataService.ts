@@ -9,6 +9,7 @@
 
 import { logger } from './Logger';
 import { askGemini } from './aiService';
+import { db } from '../database'; // Import Dexie DB
 
 // ============================================================
 // TYPES
@@ -97,13 +98,7 @@ export const getMockMacro = () => ({ macro: [], global: [] }); // Placeholder if
 // SERVICE IMPLEMENTATION
 // ============================================================
 
-const CACHE_KEY = 'real_data_cache';
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-interface CacheEntry<T> {
-    data: T;
-    timestamp: number;
-}
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes (Increased for better performance)
 
 function getApiKeys() {
     try {
@@ -121,24 +116,39 @@ function getApiKeys() {
     return { rapidApi: '', alphaVantage: '', finnhub: '', fmp: '' };
 }
 
-function getCache<T>(key: string): T | null {
+// Fixed: Use IndexedDB via Dexie instead of localStorage
+async function getCache<T>(key: string): Promise<T | null> {
     try {
-        const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
-        const entry = cache[key] as CacheEntry<T> | undefined;
-        if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data;
-    } catch (e) { /* ignore */ }
+        const entry = await db.cache.where('key').equals(key).first();
+        if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+            return entry.data as T;
+        }
+        // Cleanup expired
+        if (entry) {
+            await db.cache.delete(entry.id!);
+        }
+    } catch (e) {
+        logger.warn(`Cache read failed for ${key}`, e);
+    }
     return null;
 }
 
-function setCache<T>(key: string, data: T): void {
+async function setCache<T>(key: string, data: T): Promise<void> {
     try {
-        const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
-        cache[key] = { data, timestamp: Date.now() };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-    } catch (e) { /* ignore */ }
+        // Delete existing if any to avoid duplicates (though key is not unique in schema '++id, key', so we check)
+        const existing = await db.cache.where('key').equals(key).first();
+        if (existing?.id) {
+            await db.cache.update(existing.id, { data, timestamp: Date.now() });
+        } else {
+            await db.cache.add({ key, data, timestamp: Date.now() });
+        }
+    } catch (e) {
+        logger.warn(`Cache write failed for ${key}`, e);
+    }
 }
 
 // Helper for AI Fallback
+// Fixed: Robust JSON Parsing ("JSON Bomb" fix)
 async function fetchViaAI(query: string): Promise<MacroIndicator | null> {
     try {
         const prompt = `
@@ -148,18 +158,28 @@ async function fetchViaAI(query: string): Promise<MacroIndicator | null> {
             Use real-time data from search.
         `;
         const response = await askGemini(prompt, false);
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) return null;
 
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-            id: query.toLowerCase().replace(/\s+/g, '_'),
-            name: query,
-            value: parsed.value,
-            change: parsed.change || 0,
-            unit: parsed.unit,
-            source: 'ai'
-        };
+        // Find the first '{' and last '}' to extract valid JSON
+        const firstBrace = response.indexOf('{');
+        const lastBrace = response.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            const jsonString = response.substring(firstBrace, lastBrace + 1);
+            try {
+                const parsed = JSON.parse(jsonString);
+                return {
+                    id: query.toLowerCase().replace(/\s+/g, '_'),
+                    name: query,
+                    value: parsed.value,
+                    change: parsed.change || 0,
+                    unit: parsed.unit,
+                    source: 'ai'
+                };
+            } catch (jsonError) {
+                logger.warn(`JSON Parse failed for ${query}`, jsonError);
+            }
+        }
+        return null;
     } catch (error) {
         logger.warn(`AI Fetch failed for ${query}`, error);
         return null;
@@ -171,7 +191,7 @@ async function fetchViaAI(query: string): Promise<MacroIndicator | null> {
 // ------------------------------------------------------------
 
 export async function fetchIndianStockQuote(symbol: string): Promise<MarketQuote> {
-    const cached = getCache<MarketQuote>(`indian_${symbol}`);
+    const cached = await getCache<MarketQuote>(`indian_${symbol}`);
     if (cached) return cached;
 
     // 1. RapidAPI
@@ -191,7 +211,7 @@ export async function fetchIndianStockQuote(symbol: string): Promise<MarketQuote
                     changePercent: parseFloat(data.pChange) || 0,
                     timestamp: new Date(), source: 'rapidapi'
                 };
-                setCache(`indian_${symbol}`, quote);
+                await setCache(`indian_${symbol}`, quote);
                 return quote;
             }
         } catch (e) { logger.warn(`RapidAPI failed for ${symbol}`, e); }
@@ -205,7 +225,7 @@ export async function fetchIndianStockQuote(symbol: string): Promise<MarketQuote
             price: aiData.value, change: aiData.change, changePercent: aiData.change, // approx
             timestamp: new Date(), source: 'ai'
         };
-        setCache(`indian_${symbol}`, quote);
+        await setCache(`indian_${symbol}`, quote);
         return quote;
     }
 
@@ -225,7 +245,6 @@ export async function fetchIndianIndices(): Promise<MarketQuote[]> {
 export async function fetchIndiaVIX(): Promise<MacroIndicator> {
     // 1. Try RapidAPI (if Nifty endpoint supports it, usually it's own symbol)
     // Most Indian APIs treat VIX as an index. Let's try AI first as it's reliable for VIX.
-    // Actually user wants Standard Fallback. RapidAPI might have it.
 
     // 2. AI Fallback (Primary for VIX often)
     const aiData = await fetchViaAI('India VIX');
@@ -240,7 +259,7 @@ export async function fetchIndiaVIX(): Promise<MacroIndicator> {
 // ------------------------------------------------------------
 
 export async function fetchCommodityPrice(commodity: 'WTI' | 'BRENT' | 'GOLD' | 'SILVER'): Promise<MacroIndicator> {
-    const cached = getCache<MacroIndicator>(`commodity_${commodity}`);
+    const cached = await getCache<MacroIndicator>(`commodity_${commodity}`);
     if (cached) return cached;
 
     const { alphaVantage } = getApiKeys();
@@ -263,7 +282,7 @@ export async function fetchCommodityPrice(commodity: 'WTI' | 'BRENT' | 'GOLD' | 
                         value: val, change: (change / val) * 100,
                         unit: commodity.includes('GOLD') ? '$/oz' : '$/bbl', source: 'alphavantage'
                     };
-                    setCache(`commodity_${commodity}`, indicator);
+                    await setCache(`commodity_${commodity}`, indicator);
                     return indicator;
                 }
             }
@@ -282,7 +301,7 @@ export async function fetchCommodityPrice(commodity: 'WTI' | 'BRENT' | 'GOLD' | 
 }
 
 export async function fetchForexRate(from: string, to: string): Promise<MacroIndicator> {
-    const cached = getCache<MacroIndicator>(`forex_${from}_${to}`);
+    const cached = await getCache<MacroIndicator>(`forex_${from}_${to}`);
     if (cached) return cached;
 
     const { alphaVantage } = getApiKeys();
@@ -299,7 +318,7 @@ export async function fetchForexRate(from: string, to: string): Promise<MacroInd
                         value: parseFloat(rate['5. Exchange Rate']), change: 0,
                         source: 'alphavantage'
                     };
-                    setCache(`forex_${from}_${to}`, indicator);
+                    await setCache(`forex_${from}_${to}`, indicator);
                     return indicator;
                 }
             }
@@ -356,7 +375,7 @@ export async function fetchMacroIndicators(): Promise<MacroIndicator[]> {
 // ------------------------------------------------------------
 
 export async function fetchGlobalIndex(symbol: string, name: string): Promise<MacroIndicator> {
-    const cached = getCache<MacroIndicator>(`global_${symbol}`);
+    const cached = await getCache<MacroIndicator>(`global_${symbol}`);
     if (cached) return cached;
 
     const { finnhub } = getApiKeys();
@@ -372,7 +391,7 @@ export async function fetchGlobalIndex(symbol: string, name: string): Promise<Ma
                         value: data.c, change: data.dp,
                         source: 'finnhub'
                     };
-                    setCache(`global_${symbol}`, indicator);
+                    await setCache(`global_${symbol}`, indicator);
                     return indicator;
                 }
             }
@@ -398,7 +417,7 @@ export async function fetchGlobalIndices(): Promise<MacroIndicator[]> {
 // ------------------------------------------------------------
 
 export async function fetchInsiderTrades(): Promise<InsiderTrade[]> {
-    const cached = getCache<InsiderTrade[]>('insider_trades');
+    const cached = await getCache<InsiderTrade[]>('insider_trades');
     if (cached) return cached;
 
     // 1. Gemini AI (Primary for robust formatting of Indian data)
@@ -408,6 +427,7 @@ export async function fetchInsiderTrades(): Promise<InsiderTrade[]> {
             Return JSON: {"trades": [{"ticker", "company", "person", "relation", "type" (BUY/SELL), "quantity", "price", "value", "date"}]}
         `;
         const aiResponse = await askGemini(prompt);
+        // Robust regex here too, just in case
         const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
@@ -417,7 +437,7 @@ export async function fetchInsiderTrades(): Promise<InsiderTrade[]> {
                     type: t.type, quantity: t.quantity, price: t.price, value: t.value,
                     date: t.date, mode: 'Open Market'
                 }));
-                setCache('insider_trades', trades);
+                await setCache('insider_trades', trades);
                 return trades;
             }
         }
@@ -432,7 +452,7 @@ export async function fetchInsiderTrades(): Promise<InsiderTrade[]> {
 // ------------------------------------------------------------
 
 export async function fetchBulkDeals(): Promise<BulkDeal[]> {
-    const cached = getCache<BulkDeal[]>('bulk_deals');
+    const cached = await getCache<BulkDeal[]>('bulk_deals');
     if (cached) return cached;
 
     try {
@@ -449,7 +469,7 @@ export async function fetchBulkDeals(): Promise<BulkDeal[]> {
                     id: `ai-bulk-${i}`, ticker: d.ticker, client: d.client,
                     type: d.type, quantity: d.quantity, price: d.price, value: d.value, change: d.change
                 }));
-                setCache('bulk_deals', deals);
+                await setCache('bulk_deals', deals);
                 return deals;
             }
         }

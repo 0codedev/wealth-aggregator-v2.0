@@ -143,7 +143,7 @@ const RebalanceAlpha: React.FC = () => {
                         <XAxis dataKey="x" hide />
                         <Tooltip
                             contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                            formatter={(val: number) => formatCurrency(val)}
+                            formatter={((val: number | undefined) => val ? formatCurrency(val) : '') as any}
                             labelFormatter={() => ''}
                         />
                         <Legend />

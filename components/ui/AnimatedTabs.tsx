@@ -1,5 +1,6 @@
-import React, { createContext, useContext, KeyboardEvent, useRef, useEffect } from 'react';
+import React, { createContext, useContext, KeyboardEvent, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { springTransition } from './animations';
 
 // --- Context ---
 interface TabsContextType {
@@ -89,7 +90,7 @@ const Trigger: React.FC<TabsTriggerProps> = ({ value, children, icon, className 
                 <motion.div
                     layoutId={layoutId}
                     className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    transition={springTransition}
                 />
             )}
             <span className="relative z-10 flex items-center gap-1.5 whitespace-nowrap">

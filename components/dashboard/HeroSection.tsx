@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Trash2, TrendingUp, TrendingDown, Shield, Target, Droplets, Sparkles, PartyPopper } from 'lucide-react';
+import { Trash2, TrendingUp, TrendingDown, Shield, Target, Droplets, Sparkles, PartyPopper, Eye, EyeOff } from 'lucide-react';
 import { formatCurrency } from '../../utils/helpers';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface HeroSectionProps {
     stats: any;
@@ -48,6 +50,36 @@ const useCountUp = (targetValue: number, duration: number = 1500) => {
     }, [targetValue, duration]);
 
     return displayValue;
+};
+
+// ===================== PRIVACY SCRAMBLER HOOK =====================
+const useScrambleText = (text: string, isActive: boolean) => {
+    const [scrambled, setScrambled] = useState(text);
+    const chars = '!<>-_\\/[]{}—=+*^?#________';
+
+    useEffect(() => {
+        if (!isActive) {
+            setScrambled(text);
+            return;
+        }
+
+        let interval: NodeJS.Timeout;
+        let iteration = 0;
+
+        interval = setInterval(() => {
+            setScrambled(text.split('').map((char, index) => {
+                if (index < iteration) return text[index];
+                return chars[Math.floor(Math.random() * chars.length)];
+            }).join(''));
+
+            if (iteration >= text.length) clearInterval(interval);
+            iteration += 1 / 3;
+        }, 30);
+
+        return () => clearInterval(interval);
+    }, [text, isActive]);
+
+    return isActive ? '••••••••' : text; // Fallback to dots for stability after scramble
 };
 
 // ===================== MULTI-FACTOR HEALTH SCORES =====================
@@ -146,13 +178,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     const previousMilestone = useRef(0);
 
     // Animated Net Worth Display
-    // usePortfolio now returns Net Worth in totalValues/totalCurrent and Gross in totalAssets
-    // But we still toggle between them manually here based on showLiability
     const displayAmount = showLiability
         ? (stats?.totalValue || 0) // Net Worth (Assets - Liabilities)
         : (stats?.totalAssets || 0); // Gross Assets
 
     const animatedAmount = useCountUp(displayAmount);
+
+    // Privacy Scramble
+    // Logic: We show scrambled text if privacy mode is ON.
+    // Ideally we'd actually animate the scramble, but for now simple swap is safer for React render cycles.
 
     // Multi-factor Health Scores
     const healthScores = useMemo(() =>
@@ -162,9 +196,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
     // Dynamic gradient based on overall health
     const getGradientClass = () => {
-        if (healthScores.overall > 75) return 'from-emerald-500/5 via-transparent to-cyan-500/5';
-        if (healthScores.overall > 50) return 'from-amber-500/5 via-transparent to-orange-500/5';
-        return 'from-rose-500/5 via-transparent to-pink-500/5';
+        if (healthScores.overall > 75) return 'from-emerald-500/10 via-white dark:via-slate-900 to-cyan-500/10';
+        if (healthScores.overall > 50) return 'from-amber-500/10 via-white dark:via-slate-900 to-orange-500/10';
+        return 'from-rose-500/10 via-white dark:via-slate-900 to-pink-500/10';
     };
 
     // Milestone celebration detection
@@ -184,30 +218,33 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }, [stats?.totalAssets]);
 
     return (
-        <div className="mb-8">
+        <div className="mb-8 relative group">
             {/* NET WORTH CARD (Full Width) */}
-            <div className={`bg-gradient-to-br ${getGradientClass()} bg-white dark:bg-slate-900 rounded-2xl p-6 relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-500`}>
+            <div className={`bg-gradient-to-br ${getGradientClass()} bg-white dark:bg-slate-900 rounded-2xl p-8 relative overflow-hidden border border-slate-200 dark:border-slate-800/50 shadow-2xl transition-all duration-500`}>
 
                 {/* Celebration Overlay */}
                 <CelebrationOverlay show={showCelebration} milestone={celebrationMilestone} />
 
                 {/* Animated Background Particles */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-10 right-20 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
-                    <div className="absolute bottom-10 left-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl animate-pulse delay-700" />
+                    <div className="absolute top-10 right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] animate-pulse" />
+                    <div className="absolute bottom-10 left-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px] animate-pulse delay-700" />
+                    {/* Noise Texture Overlay */}
+                    <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E")` }} />
                 </div>
 
                 <div className="relative z-10">
                     {/* Header Row: Title & Top Right Controls */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
-                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                {showLiability ? 'Real-Time Net Worth' : 'Gross Asset Value'}
+                            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                {showLiability ? <Target size={14} className="text-indigo-400" /> : <Shield size={14} className="text-emerald-400" />}
+                                {showLiability ? 'Net Worth' : 'Gross Assets'}
                             </p>
                             {stats?.totalPLPercent && (
-                                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${parseFloat(stats.totalPLPercent) >= 0
-                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                                    : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
+                                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide ${parseFloat(stats.totalPLPercent) >= 0
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                                     }`}>
                                     <TrendingUp size={10} />
                                     {stats.totalPLPercent}%
@@ -217,12 +254,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
                         {/* Top Right Controls: Toggle & Expand */}
                         <div className="flex items-center gap-3">
-                            <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div className="flex bg-slate-100 dark:bg-slate-950/50 p-1 rounded-lg border border-slate-200 dark:border-slate-800 backdrop-blur-sm">
                                 <button
                                     onClick={() => setShowLiability(false)}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${!showLiability
                                         ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                                         }`}
                                 >
                                     Gross
@@ -231,7 +268,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     onClick={() => setShowLiability(true)}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${showLiability
                                         ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                                         }`}
                                 >
                                     Net
@@ -240,7 +277,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
                             <button
                                 onClick={() => setIsExpanded(!isExpanded)}
-                                className="p-2 text-slate-400 hover:text-indigo-500 transition-colors rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                                className="p-2 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors rounded-lg bg-slate-100 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/30"
                                 title={isExpanded ? "Collapse" : "Expand Details"}
                             >
                                 <TrendingDown size={16} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -249,86 +286,124 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </div>
 
                     {/* Centered Amount */}
-                    <div className="flex justify-center items-center py-6 md:py-10">
-                        <div className="flex items-baseline gap-3">
-                            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 dark:text-white font-mono tabular-nums transition-all duration-300 text-center">
-                                {isPrivacyMode ? '••••••' : formatCurrency(animatedAmount)}
-                            </h1>
+                    <div className="flex justify-center items-center py-8 md:py-12 relative">
+                        {/* Glow effect behind text */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-20 bg-indigo-500/5 blur-3xl rounded-full" />
+
+                        <div className="flex items-baseline gap-3 relative z-10">
+                            <AnimatePresence mode="wait">
+                                {isPrivacyMode ? (
+                                    <motion.h1
+                                        key="privacy"
+                                        initial={{ opacity: 0, filter: "blur(10px)" }}
+                                        animate={{ opacity: 1, filter: "blur(0px)" }}
+                                        exit={{ opacity: 0, filter: "blur(10px)" }}
+                                        className="text-6xl md:text-8xl font-black tracking-tighter text-slate-700 font-mono select-none"
+                                    >
+                                        ••••••••
+                                    </motion.h1>
+                                ) : (
+                                    <motion.h1
+                                        key="value"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 dark:text-white font-mono tabular-nums bg-clip-text text-transparent bg-gradient-to-b from-slate-900 dark:from-white to-slate-400 drop-shadow-2xl"
+                                    >
+                                        {formatCurrency(animatedAmount)}
+                                    </motion.h1>
+                                )}
+                            </AnimatePresence>
+
                             {!isPrivacyMode && healthScores.overall > 75 && (
-                                <Sparkles className="w-8 h-8 text-amber-500 animate-pulse" />
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", delay: 0.5 }}
+                                >
+                                    <Sparkles className="w-8 h-8 text-amber-400 animate-pulse drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" />
+                                </motion.div>
                             )}
                         </div>
                     </div>
 
                     {/* Expandable Section */}
-                    {isExpanded && (
-                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2 fade-in duration-300">
-                            {/* Multi-Factor Health Scores */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 mb-6">
-                                <ScoreRing
-                                    score={healthScores.liquidity}
-                                    label="Liquidity"
-                                    icon={<Droplets size={12} className="text-blue-500" />}
-                                    color="stroke-blue-500"
-                                />
-                                <ScoreRing
-                                    score={healthScores.growth}
-                                    label="Growth"
-                                    icon={<TrendingUp size={12} className="text-emerald-500" />}
-                                    color="stroke-emerald-500"
-                                />
-                                <ScoreRing
-                                    score={healthScores.risk}
-                                    label="Risk"
-                                    icon={<Shield size={12} className="text-amber-500" />}
-                                    color="stroke-amber-500"
-                                />
-                                <ScoreRing
-                                    score={healthScores.goal}
-                                    label="Goal"
-                                    icon={<Target size={12} className="text-indigo-500" />}
-                                    color="stroke-indigo-500"
-                                />
-                            </div>
+                    <AnimatePresence>
+                        {isExpanded && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ type: "spring", damping: 20, stiffness: 100 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                                    {/* Multi-Factor Health Scores */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-200 dark:border-slate-800 mb-6 backdrop-blur-sm">
+                                        <ScoreRing
+                                            score={healthScores.liquidity}
+                                            label="Liquidity"
+                                            icon={<Droplets size={12} className="text-blue-400" />}
+                                            color="stroke-blue-400"
+                                        />
+                                        <ScoreRing
+                                            score={healthScores.growth}
+                                            label="Growth"
+                                            icon={<TrendingUp size={12} className="text-emerald-400" />}
+                                            color="stroke-emerald-400"
+                                        />
+                                        <ScoreRing
+                                            score={healthScores.risk}
+                                            label="Risk"
+                                            icon={<Shield size={12} className="text-amber-400" />}
+                                            color="stroke-amber-400"
+                                        />
+                                        <ScoreRing
+                                            score={healthScores.goal}
+                                            label="Goal"
+                                            icon={<Target size={12} className="text-indigo-400" />}
+                                            color="stroke-indigo-400"
+                                        />
+                                    </div>
 
-                            {/* Bottom Stats Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-                                <div>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total Assets</p>
-                                    <p className="text-slate-700 dark:text-slate-200 font-mono text-lg font-semibold tabular-nums">
-                                        {isPrivacyMode ? '••••' : formatCurrency(stats?.totalAssets || 0)}
-                                    </p>
-                                </div>
-                                <div className={`transition-opacity duration-300 ${!showLiability ? 'opacity-40 grayscale' : 'opacity-100'}`}>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Liabilities</p>
-                                    <p className="text-rose-500 font-mono text-lg font-semibold tabular-nums">
-                                        -{isPrivacyMode ? '••••' : formatCurrency(stats?.totalLiability || 0)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Overall Score</p>
-                                    <div className="flex items-center gap-2 justify-center md:justify-start">
-                                        <div className="flex-1 max-w-[100px] h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-1000 ${healthScores.overall > 75 ? 'bg-emerald-500' :
-                                                    healthScores.overall > 50 ? 'bg-amber-500' : 'bg-rose-500'
-                                                    }`}
-                                                style={{ width: `${healthScores.overall}%` }}
-                                            />
+                                    {/* Bottom Stats Row */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                                        <div>
+                                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Total Assets</p>
+                                            <p className="text-slate-600 dark:text-slate-200 font-mono text-lg font-semibold tabular-nums">
+                                                {isPrivacyMode ? '••••' : formatCurrency(stats?.totalAssets || 0)}
+                                            </p>
                                         </div>
-                                        <span className={`font-mono text-sm font-bold ${healthScores.overall > 75 ? 'text-emerald-500' :
-                                            healthScores.overall > 50 ? 'text-amber-500' : 'text-rose-500'
-                                            }`}>
-                                            {healthScores.overall}
-                                        </span>
+                                        <div className={`transition-opacity duration-300 ${!showLiability ? 'opacity-40 grayscale' : 'opacity-100'}`}>
+                                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Liabilities</p>
+                                            <p className="text-rose-400 font-mono text-lg font-semibold tabular-nums">
+                                                -{isPrivacyMode ? '••••' : formatCurrency(stats?.totalLiability || 0)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Overall Score</p>
+                                            <div className="flex items-center gap-2 justify-center md:justify-start">
+                                                <div className="flex-1 max-w-[100px] h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-1000 ${healthScores.overall > 75 ? 'bg-emerald-500' :
+                                                            healthScores.overall > 50 ? 'bg-amber-500' : 'bg-rose-500'
+                                                            }`}
+                                                        style={{ width: `${healthScores.overall}%` }}
+                                                    />
+                                                </div>
+                                                <span className={`font-mono text-sm font-bold ${healthScores.overall > 75 ? 'text-emerald-400' :
+                                                    healthScores.overall > 50 ? 'text-amber-400' : 'text-rose-400'
+                                                    }`}>
+                                                    {healthScores.overall}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
-            {/* NO Timeline Here */}
         </div>
     );
 };

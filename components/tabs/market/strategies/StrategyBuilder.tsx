@@ -392,7 +392,7 @@ const StrategyBuilder: React.FC = () => {
                                 <YAxis tick={{ fill: '#64748b', fontSize: 10 }} tickFormatter={(v) => formatCurrency(v)} tickLine={false} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-                                    formatter={(value: number) => formatCurrency(value)}
+                                    formatter={((value: number | undefined) => value ? formatCurrency(value) : '') as any}
                                     labelFormatter={(label) => `Date: ${label}`}
                                 />
                                 <Area type="monotone" dataKey="value" stroke="#a855f7" fill="url(#strategyGradient)" strokeWidth={2} name="Strategy" />

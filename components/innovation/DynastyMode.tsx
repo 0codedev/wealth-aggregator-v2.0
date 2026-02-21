@@ -120,7 +120,7 @@ export const DynastyMode: React.FC = () => {
                         />
                         <Tooltip
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            formatter={(val: number) => [formatCurrency(val), 'Wealth']}
+                            formatter={((val: number | undefined) => val ? [formatCurrency(val), 'Wealth'] : ['', '']) as any}
                             labelFormatter={(label) => label}
                         />
                         <Area

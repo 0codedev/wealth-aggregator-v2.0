@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { pageVariants } from '../ui/animations';
 import {
     TrendingUp, TrendingDown, Target,
     Wallet, Coins, Gauge, Plus, LayoutList, Table as TableIcon,
@@ -14,6 +16,7 @@ import { LifeEvent } from '../../database';
 import { generateMonthlyReport } from '../../services/ReportService';
 import { logger } from '../../services/Logger';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { useFamily } from '../../contexts/FamilyContext';
 
 // New Components
 import CommandCenter from '../dashboard/CommandCenter';
@@ -23,7 +26,7 @@ const FinancialCalendar = lazy(() => import('../dashboard/widgets/FinancialCalen
 const HeatmapWidget = lazy(() => import('../dashboard/widgets/HeatmapWidget'));
 import WidgetSkeleton from '../shared/WidgetSkeleton';
 import {
-    TotalPLWidget, TopPerformerWidget, LoanWidgetWrapper,
+    TotalPLWidget, TopPerformerWidget, TotalHoldingsWidget, LoanWidgetWrapper,
     Project5LWidget, ExposureChartWidget, PlatformChartWidget,
     SpendingWidget, MarketWidget, CommunityWidget
 } from '../dashboard/StandardWidgets';
@@ -62,29 +65,50 @@ import { LiabilityWatchdogWidget } from '../dashboard/widgets/LiabilityWatchdogW
 import { GoalThermometer } from '../dashboard/widgets/GoalThermometer';
 const MilestoneTimelineWidget = lazy(() => import('../dashboard/widgets/MilestoneTimelineWidget'));
 
+// Power User Widgets
+const XIRRTimeMachine = lazy(() => import('../dashboard/widgets/XIRRTimeMachine'));
+const SmartWatchlist = lazy(() => import('../dashboard/widgets/SmartWatchlist'));
+const DividendCalendar = lazy(() => import('../dashboard/widgets/DividendCalendar'));
 
+// Moonshot Widgets
+const PortfolioConstellation = lazy(() => import('../dashboard/widgets/PortfolioConstellation'));
+const BlackSwanWarRoom = lazy(() => import('../dashboard/widgets/BlackSwanWarRoom'));
+const WealthTimeCapsule = lazy(() => import('../dashboard/widgets/WealthTimeCapsule'));
 
-// Type-safe Portfolio Stats interface
-interface PortfolioStats {
-    totalInvested: number;
-    totalCurrent: number;
-    totalValue?: number;
-    totalPL: number;
-    totalPLPercent: number | string; // Can be string from toFixed()
-    loanBalance?: number;
-    investmentCount?: number;
-    totalAssets?: number;
-    diversityScore?: number;
-    [key: string]: any; // Allow additional properties from App.tsx
+// Store
+import { usePortfolioStore } from '../../store/portfolioStore';
+import { useDerivedStats } from '../../hooks/useDerivedStats';
+
+// FIX #5: Moved interface to module scope (was inside component body)
+interface ProjectionPoint {
+    year: number;
+    amount: number;
+    date?: string;
+    base?: number;
+    bull?: number;
+    bear?: number;
+    eventMarker?: boolean;
 }
 
+// FIX #10: Moved to module scope (was re-created each render)
+const DEFAULT_WIDGETS = [
+    'market-widget', 'community-widget', 'spending-widget',
+    'calendar',
+    'wealth-simulator',
+    'tax-harvesting', 'total-pl', 'top-performer', 'loan-widget',
+    'project-5l', 'exposure-chart', 'platform-chart',
+    'heatmap', 'alerts-widget',
+    'fortress-hub',
+    'ai-copilot', 'fire-dashboard', 'correlation-matrix', 'rebalancing-wizard',
+    'runway-gauge', 'liability-watchdog',
+    'goal-thermometer',
+    'smart-actions-widget',
+    'milestone-timeline',
+    'xirr-time-machine', 'smart-watchlist', 'dividend-calendar'
+];
+
 interface DashboardTabProps {
-    investments: Investment[];
-    stats: PortfolioStats;
-    allocationData: AggregatedData[];
-    assetClassData: AggregatedData[];
-    platformData: AggregatedData[];
-    projectionData: any[]; // Kept for interface compatibility but we compute dynamic inside
+    // UI/Callback props KEPT
     isPrivacyMode: boolean;
     isDarkMode: boolean;
     onAddFirstAsset: () => void;
@@ -95,24 +119,50 @@ interface DashboardTabProps {
     CustomTooltip: React.ComponentType<any>;
     marketVix: number;
     marketStatus: MarketStatus;
-    // Synced Life Events
-    lifeEvents: LifeEvent[];
-    addLifeEvent: (event: Omit<LifeEvent, 'id'>) => Promise<void>;
-    deleteLifeEvent: (id: number) => Promise<void>;
-    history: { date: string, value: number }[];
     // Controlled View State
     view: 'MAIN' | 'SPENDING' | 'MARKETS' | 'COMMUNITY';
     onViewChange: (view: 'MAIN' | 'SPENDING' | 'MARKETS' | 'COMMUNITY') => void;
 }
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
-    investments, stats, allocationData, assetClassData, platformData,
-    projectionData, isPrivacyMode, isDarkMode, onAddFirstAsset,
+    isPrivacyMode, isDarkMode, onAddFirstAsset,
     formatCurrency, formatCurrencyPrecise, calculatePercentage,
     ASSET_CLASS_COLORS, CustomTooltip, marketVix, marketStatus,
-    lifeEvents, addLifeEvent, deleteLifeEvent, history,
     view, onViewChange
 }) => {
+
+    // Consume Store Directly (No Prop Drilling)
+    const {
+        investments: allInvestments, stats: globalStats,
+        history, lifeEvents, addLifeEvent, deleteLifeEvent
+    } = usePortfolioStore();
+
+    // Context for Filtering
+    const { activeEntity } = useFamily();
+
+    // Filter Investments based on Active Entity
+    const investments = useMemo(() => {
+        if (activeEntity === 'ALL') return allInvestments;
+        return allInvestments.filter(inv => {
+            const owner = inv.owner || 'SELF';
+            return owner === activeEntity;
+        });
+    }, [allInvestments, activeEntity]);
+
+    // Compute Derived Stats (The Fix for Profile Filtering)
+    const { stats, allocationData, assetClassData, platformData } = useDerivedStats(investments, globalStats);
+
+    // FIX #8: Replaced console.log with dev-only logger
+    useEffect(() => {
+        if (import.meta.env.DEV) {
+            logger.debug('[DashboardTab] Debug', {
+                storeInvestments: allInvestments?.length,
+                filteredInvestments: investments?.length,
+                activeEntity,
+            }, 'DashboardTab');
+        }
+    }, [allInvestments, investments, activeEntity]);
+
     // Global Toggle State: false = Gross, true = Net
     const [showNetWorth, setShowNetWorth] = useState(false);
 
@@ -127,6 +177,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             // Base: 12% | Bull: 18% | Bear: 6% CAGR
             return {
                 date: year.toString(),
+                year,
+                amount: Math.round(startValue * Math.pow(1.12, i)),
                 base: Math.round(startValue * Math.pow(1.12, i)),
                 bull: Math.round(startValue * Math.pow(1.18, i)),
                 bear: Math.round(startValue * Math.pow(1.06, i)),
@@ -134,6 +186,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             };
         });
     }, [stats, showNetWorth]);
+
+    // FIX #9: Wire projectionData to dynamicProjectionData (was always empty [])
+    const projectionData: ProjectionPoint[] = dynamicProjectionData;
 
     // --- TIME TRAVELER STATE ---
     const [timeTravelIndex, setTimeTravelIndex] = useState<number>(0);
@@ -184,41 +239,21 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
     const isPresent = timeTravelIndex === (history?.length || 0);
 
     // --- DRAGGABLE GRID STATE ---
-    const DEFAULT_WIDGETS = [
-        'market-widget', 'community-widget', 'spending-widget',
-        'calendar',
-        'wealth-simulator',
-        'tax-harvesting', 'total-pl', 'top-performer', 'loan-widget',
-        'project-5l', 'exposure-chart', 'platform-chart',
-        'heatmap', 'alerts-widget',
-        'fortress-hub',
-        'ai-copilot', 'fire-dashboard', 'correlation-matrix', 'rebalancing-wizard',
-        'runway-gauge', 'liability-watchdog',
-        'goal-thermometer',
-        'smart-actions-widget',
-        'milestone-timeline'
-    ];
-
     const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
         try {
-            const saved = localStorage.getItem('dashboard-widget-order-v8');
+            const saved = localStorage.getItem('dashboard-widget-order-v9');
             return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
         } catch {
             return DEFAULT_WIDGETS;
         }
     });
 
+    // FIX #4: Removed duplicate useEffect (was identical block declared twice)
     useEffect(() => {
         if (widgetOrder.length < DEFAULT_WIDGETS.length) {
             setWidgetOrder(DEFAULT_WIDGETS);
         }
-    }, [DEFAULT_WIDGETS.length]);
-
-    useEffect(() => {
-        if (widgetOrder.length < DEFAULT_WIDGETS.length) {
-            setWidgetOrder(DEFAULT_WIDGETS);
-        }
-    }, [DEFAULT_WIDGETS.length]);
+    }, []);
 
     // Registry for Widgets
     const renderWidget = (id: string) => {
@@ -235,6 +270,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 return (
                     <ErrorBoundary key={id}>
                         <TopPerformerWidget id={id} {...commonProps} stats={stats} investments={investments} calculatePercentage={calculatePercentage} />
+                    </ErrorBoundary>
+                );
+            case 'total-holdings':
+                return (
+                    <ErrorBoundary key={id}>
+                        <TotalHoldingsWidget id={id} {...commonProps} investments={investments} stats={stats} isPrivacyMode={isPrivacyMode} />
                     </ErrorBoundary>
                 );
             case 'loan-widget':
@@ -434,170 +475,265 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                         </div>
                     </ErrorBoundary>
                 );
+            case 'xirr-time-machine':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="XIRR Time-Machine" />}>
+                                <XIRRTimeMachine
+                                    investments={investments}
+                                    totalCurrentValue={stats?.totalCurrent || 0}
+                                    totalInvested={stats?.totalInvested || 0}
+                                    isPrivacyMode={isPrivacyMode}
+                                />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
+                );
+            case 'smart-watchlist':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Smart Watchlist" />}>
+                                <SmartWatchlist isPrivacyMode={isPrivacyMode} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
+                );
+            case 'dividend-calendar':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Dividend Hub" />}>
+                                <DividendCalendar isPrivacyMode={isPrivacyMode} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
+                );
+            case 'portfolio-constellation':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Constellation" />}>
+                                <PortfolioConstellation
+                                    investments={investments}
+                                    isPrivacyMode={isPrivacyMode}
+                                />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
+                );
+            case 'black-swan-war-room':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Black Swan War Room" />}>
+                                <BlackSwanWarRoom
+                                    investments={investments}
+                                    totalCurrentValue={stats?.totalCurrent || 0}
+                                    totalInvested={stats?.totalInvested || 0}
+                                    isPrivacyMode={isPrivacyMode}
+                                />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
+                );
+            case 'wealth-time-capsule':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Time Capsule" />}>
+                                <WealthTimeCapsule
+                                    totalCurrentValue={stats?.totalCurrent || 0}
+                                    totalInvested={stats?.totalInvested || 0}
+                                    investments={investments}
+                                    isPrivacyMode={isPrivacyMode}
+                                />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
+                );
             default:
                 return null;
         }
     };
-    if (view === 'SPENDING') {
+    const renderDashboardView = () => {
+        if (view === 'SPENDING') {
+            return (
+                <SpendingAnalyticsHub
+                    onBack={() => onViewChange('MAIN')}
+                    formatCurrency={formatCurrency}
+                />
+            );
+        }
+
+        if (view === 'MARKETS') {
+            return (
+                <MarketInsightsHub
+                    onBack={() => onViewChange('MAIN')}
+                    stats={stats}
+                    investments={investments}
+                />
+            );
+        }
+
+        if (view === 'COMMUNITY') {
+            return (
+                <CommunityHub
+                    onBack={() => onViewChange('MAIN')}
+                    investments={investments}
+                    stats={stats}
+                    assetClassData={assetClassData}
+                />
+            );
+        }
+
         return (
-            <SpendingAnalyticsHub
-                onBack={() => onViewChange('MAIN')}
-                formatCurrency={formatCurrency}
-            />
-        );
-    }
+            <div className="space-y-6 pb-20 md:pb-0">
 
-    if (view === 'MARKETS') {
-        return (
-            <MarketInsightsHub
-                onBack={() => onViewChange('MAIN')}
-                stats={stats}
-                investments={investments}
-            />
-        );
-    }
-
-    if (view === 'COMMUNITY') {
-        return (
-            <CommunityHub
-                onBack={() => onViewChange('MAIN')}
-                investments={investments}
-                stats={stats}
-                assetClassData={assetClassData}
-            />
-        );
-    }
-
-    return (
-        <div className="space-y-6 animate-in fade-in duration-300 pb-20 md:pb-0">
-
-            {/* Actions Bar */}
-            <div className="flex justify-end px-2 gap-2">
-                <button
-                    onClick={() => setShowHealthHub(!showHealthHub)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
-                >
-                    <Activity size={14} />
-                    Data Health
-                </button>
-                <button
-                    onClick={() => setShowReportModal(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
-                >
-                    <FileText size={14} />
-                    Generate Report
-                </button>
-            </div>
-
-            {showHealthHub && (
-                <div className="mb-6 animate-in slide-in-from-top-4 duration-300">
-                    <DataHealthHub onClose={() => setShowHealthHub(false)} />
+                {/* Actions Bar */}
+                <div className="flex justify-end px-2 gap-2">
+                    <button
+                        onClick={() => setShowHealthHub(!showHealthHub)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
+                    >
+                        <Activity size={14} />
+                        Data Health
+                    </button>
+                    <button
+                        onClick={() => setShowReportModal(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
+                    >
+                        <FileText size={14} />
+                        Generate Report
+                    </button>
                 </div>
-            )}
 
-            <CommandCenter marketStatus={marketStatus} marketVix={marketVix} />
-            <AlphaTicker />
+                {showHealthHub && (
+                    <div className="mb-6 animate-in slide-in-from-top-4 duration-300">
+                        <DataHealthHub onClose={() => setShowHealthHub(false)} />
+                    </div>
+                )}
 
-            {investments.length > 0 && (
-                <>
-                    {/* TIME TRAVELER HEADER OR HERO */}
-                    {!isPresent ? (
-                        <div className={`rounded-2xl p-8 shadow-xl border-2 transition-all duration-500 relative overflow-hidden ${timeTravelData.type === 'PAST' ? 'bg-slate-900 border-slate-700' : 'bg-indigo-950 border-indigo-500'}`}>
-                            <div className="absolute top-0 right-0 p-8 opacity-10">
-                                {timeTravelData.type === 'PAST' ? <History size={120} className="text-white" /> : <Target size={120} className="text-indigo-400" />}
+                <CommandCenter marketStatus={marketStatus} marketVix={marketVix} />
+                <AlphaTicker />
+
+                {investments.length > 0 && (
+                    <>
+                        {/* TIME TRAVELER HEADER OR HERO */}
+                        {!isPresent ? (
+                            <div className={`rounded-xl p-6 shadow-lg border transition-all duration-500 relative overflow-hidden ${timeTravelData.type === 'PAST' ? 'bg-slate-800 border-slate-700' : 'bg-slate-800 border-indigo-500'}`}>
+                                <div className="absolute top-0 right-0 p-8 opacity-10">
+                                    {timeTravelData.type === 'PAST' ? <History size={120} className="text-white" /> : <Target size={120} className="text-indigo-400" />}
+                                </div>
+                                <div className="relative z-10 text-center">
+                                    <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${timeTravelData.type === 'PAST' ? 'text-slate-400' : 'text-indigo-300'}`}>
+                                        {timeTravelData.type === 'PAST' ? 'Historical Snapshot' : 'Future Projection'}
+                                    </p>
+                                    <h2 className="text-5xl font-black text-white mb-2">
+                                        {isPrivacyMode ? '••••••' : formatCurrency(timeTravelData.value)}
+                                    </h2>
+                                    <p className="text-lg font-medium text-white/70">
+                                        {timeTravelData.date}
+                                    </p>
+                                    <button
+                                        onClick={() => setTimeTravelIndex(history?.length || 0)}
+                                        className="mt-6 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm font-bold backdrop-blur-sm transition-colors"
+                                    >
+                                        Return to Present
+                                    </button>
+                                </div>
                             </div>
-                            <div className="relative z-10 text-center">
-                                <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${timeTravelData.type === 'PAST' ? 'text-slate-400' : 'text-indigo-300'}`}>
-                                    {timeTravelData.type === 'PAST' ? 'Historical Snapshot' : 'Future Projection'}
-                                </p>
-                                <h2 className="text-5xl font-black text-white mb-2">
-                                    {isPrivacyMode ? '••••••' : formatCurrency(timeTravelData.value)}
-                                </h2>
-                                <p className="text-lg font-medium text-white/70">
-                                    {timeTravelData.date}
-                                </p>
+                        ) : (
+                            <HeroSection
+                                stats={stats}
+                                isPrivacyMode={isPrivacyMode}
+                                dynamicHealthScore={dynamicHealthScore}
+                                formatCurrency={formatCurrency}
+                                lifeEvents={lifeEvents}
+                                addLifeEvent={addLifeEvent}
+                                deleteLifeEvent={deleteLifeEvent}
+                                showLiability={showNetWorth}
+                                setShowLiability={setShowNetWorth}
+                            />
+                        )}
+
+                        {/* TIME TRAVELER SLIDER */}
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1"><History size={12} /> Past</span>
+                                    <span className="text-xs font-bold text-indigo-500 uppercase flex items-center gap-1">Time Traveler <Clock size={12} /></span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">Future <Target size={12} /></span>
+                                </div>
+
                                 <button
-                                    onClick={() => setTimeTravelIndex(history?.length || 0)}
-                                    className="mt-6 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm font-bold backdrop-blur-sm transition-colors"
+                                    onClick={() => generateMonthlyReport({ investments, stats, allocationData })}
+                                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-md transition-colors"
                                 >
-                                    Return to Present
+                                    <ArrowUpRight size={12} /> Report
                                 </button>
                             </div>
+                            <input
+                                type="range"
+                                min={0}
+                                max={(history?.length || 0) + (projectionData?.length || 0)}
+                                value={timeTravelIndex}
+                                onChange={(e) => setTimeTravelIndex(parseInt(e.target.value))}
+                                className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
                         </div>
-                    ) : (
-                        <HeroSection
-                            stats={stats}
-                            isPrivacyMode={isPrivacyMode}
-                            dynamicHealthScore={dynamicHealthScore}
-                            formatCurrency={formatCurrency}
-                            lifeEvents={lifeEvents}
-                            addLifeEvent={addLifeEvent}
-                            deleteLifeEvent={deleteLifeEvent}
-                            showLiability={showNetWorth}
-                            setShowLiability={setShowNetWorth}
-                        />
-                    )}
 
-                    {/* TIME TRAVELER SLIDER */}
-                    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-4">
-                                <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1"><History size={12} /> Past</span>
-                                <span className="text-xs font-bold text-indigo-500 uppercase flex items-center gap-1">Time Traveler <Clock size={12} /></span>
-                                <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">Future <Target size={12} /></span>
-                            </div>
+                        {/* Only show widgets if in Present Mode */}
+                        {isPresent && (
+                            <>
+                                {/* EDIT MODE BANNER */}
+                                {isEditMode && (
+                                    <div className="bg-indigo-600 text-white p-2 rounded-lg text-center text-sm font-bold mb-4 animate-in fade-in slide-in-from-top-2">
+                                        Edit Mode Active – Drag widgets to reorder
+                                    </div>
+                                )}
 
-                            <button
-                                onClick={() => generateMonthlyReport({ investments, stats, allocationData })}
-                                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-md transition-colors"
-                            >
-                                <ArrowUpRight size={12} /> Report
-                            </button>
-                        </div>
-                        <input
-                            type="range"
-                            min={0}
-                            max={(history?.length || 0) + (projectionData?.length || 0)}
-                            value={timeTravelIndex}
-                            onChange={(e) => setTimeTravelIndex(parseInt(e.target.value))}
-                            className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                        />
-                    </div>
-
-                    {/* Only show widgets if in Present Mode */}
-                    {isPresent && (
-                        <>
-                            {/* EDIT MODE BANNER */}
-                            {isEditMode && (
-                                <div className="bg-indigo-600 text-white p-2 rounded-lg text-center text-sm font-bold mb-4 animate-in fade-in slide-in-from-top-2">
-                                    Edit Mode Active – Drag widgets to reorder
-                                </div>
-                            )}
-
-                            <DashboardGrid renderWidget={renderWidget} />
-                        </>
-                    )}
-                </>
-            )
-            }
-
-            {
-                investments.length === 0 && (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm"><div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-4"><PieChart size={32} /></div><h3 className="text-lg font-semibold text-slate-900 dark:text-white">No investment data found</h3><button onClick={onAddFirstAsset} className="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full font-medium hover:bg-indigo-700 transition-colors"><Plus size={20} /> Add First Asset</button></div>
+                                <DashboardGrid renderWidget={renderWidget} />
+                            </>
+                        )}
+                    </>
                 )
-            }
+                }
 
-            {/* Report Modal */}
-            <ReportGenerationModal
-                isOpen={showReportModal}
-                onClose={() => setShowReportModal(false)}
-                currentStats={stats}
-                investments={investments}
-                allocationData={allocationData}
-            />
-        </div >
+                {
+                    investments.length === 0 && (
+                        <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm"><div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-4"><PieChart size={32} /></div><h3 className="text-lg font-semibold text-slate-900 dark:text-white">No investment data found</h3><button onClick={onAddFirstAsset} className="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full font-medium hover:bg-indigo-700 transition-colors"><Plus size={20} /> Add First Asset</button></div>
+                    )
+                }
+
+                {/* Report Modal */}
+                <ReportGenerationModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
+                    currentStats={stats}
+                    investments={investments}
+                    allocationData={allocationData}
+                />
+            </div>
+        );
+    }; // Close renderDashboardView
+
+    return (
+        <AnimatePresence mode="wait">
+            <motion.div
+                key={view}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="h-full"
+            >
+                {renderDashboardView()}
+            </motion.div>
+        </AnimatePresence>
     );
-};
+}; // Close DashboardTab component
 
 // Wrap with React.memo to prevent unnecessary re-renders
 export default React.memo(DashboardTab);

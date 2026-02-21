@@ -5,6 +5,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } fro
 import { CustomTooltip } from '../../shared/CustomTooltip';
 import { Investment, InvestmentType } from '../../../types';
 import { useSettingsStore } from '../../../store/settingsStore';
+import { RiskEngine } from '../../../services/RiskEngine';
 import TargetConfigModal from '../../TargetConfigModal';
 
 interface RiskEngineViewProps {
@@ -57,6 +58,12 @@ export const RiskEngineView: React.FC<RiskEngineViewProps> = ({ investments, tot
     const [isTargetConfigOpen, setIsTargetConfigOpen] = useState(false);
 
     const { allocationTargets } = useSettingsStore();
+
+    // Instantiate Risk Engine to get context
+    const riskEngine = useMemo(() => new RiskEngine(), []);
+    // Simulate setting context (in real app, this comes from global store/provider)
+    riskEngine.setContext({ scenario: 'SILVER_CRASH', vix: 45 });
+    const context = riskEngine.getContext();
 
     // --- Calculations ---
 
@@ -115,30 +122,46 @@ export const RiskEngineView: React.FC<RiskEngineViewProps> = ({ investments, tot
 
             {/* Header Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Beta Gauge */}
-                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+                {/* Risk Matrix & Market Context */}
+                <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Gauge size={100} className="text-indigo-500" />
+                        <Flame size={100} className="text-rose-500" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-                        <Gauge size={16} /> Portfolio Beta
-                    </h3>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <h2 className={`text-4xl font-black ${portfolioBeta > 1.2 ? 'text-rose-500' : portfolioBeta < 0.8 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                            {portfolioBeta.toFixed(2)}
-                        </h2>
-                        <span className="text-xs font-bold text-slate-500">vs NIFTY 1.0</span>
+
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            Market Context
+                        </h3>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className={`px-2 py-1 rounded text-xs font-bold border ${context.scenario === 'SILVER_CRASH' ? 'bg-rose-900/30 text-rose-400 border-rose-500/30' : 'bg-emerald-900/30 text-emerald-400 border-emerald-500/30'}`}>
+                                {context.scenario.replace('_', ' ')}
+                            </div>
+                            <span className="text-xs text-slate-500 font-mono">VIX: {context.vix}</span>
+                        </div>
+
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-2">
+                            <Gauge size={16} /> Portfolio Beta
+                        </h3>
+                        <div className="flex items-baseline gap-2">
+                            <h2 className={`text-4xl font-black ${portfolioBeta > 1.2 ? 'text-rose-500' : portfolioBeta < 0.8 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                {portfolioBeta.toFixed(2)}
+                            </h2>
+                            <span className="text-xs font-bold text-slate-500">vs NIFTY 1.0</span>
+                        </div>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">
-                        {portfolioBeta > 1.2 ? "High Volatility. Your portfolio swings harder than the market." :
-                            portfolioBeta < 0.8 ? "Defensive. You are shielded from major crashes." :
-                                "Balanced. You track the market closely."}
-                    </p>
-                    <div className="w-full bg-slate-800 h-2 rounded-full mt-4 overflow-hidden">
-                        <div
-                            className={`h-full transition-all duration-1000 ${portfolioBeta > 1.2 ? 'bg-rose-500' : portfolioBeta < 0.8 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                            style={{ width: `${Math.min(portfolioBeta * 50, 100)}%` }} // Scale: 2.0 = 100%
-                        ></div>
+
+                    <div className="mt-4">
+                        <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">
+                            {portfolioBeta > 1.2 ? "High Volatility. Your portfolio swings harder than the market." :
+                                portfolioBeta < 0.8 ? "Defensive. You are shielded from major crashes." :
+                                    "Balanced. You track the market closely."}
+                        </p>
+                        <div className="w-full bg-slate-800 h-2 rounded-full mt-4 overflow-hidden">
+                            <div
+                                className={`h-full transition-all duration-1000 ${portfolioBeta > 1.2 ? 'bg-rose-500' : portfolioBeta < 0.8 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                style={{ width: `${Math.min(portfolioBeta * 50, 100)}%` }} // Scale: 2.0 = 100%
+                            ></div>
+                        </div>
                     </div>
                 </div>
 
@@ -229,10 +252,10 @@ export const RiskEngineView: React.FC<RiskEngineViewProps> = ({ investments, tot
                     {/* Shopping List */}
                     <div className="space-y-3 overflow-y-auto max-h-64 pr-2">
                         {rebalancingPlan.map((item) => (
-                            <div key={item.class} className="bg-slate-950/50 rounded-xl p-4 border border-slate-800 flex items-center justify-between">
+                            <div key={item.class} className="bg-slate-50 dark:bg-slate-950/50 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-sm font-bold text-slate-300">{item.class}</span>
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{item.class}</span>
                                         <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${item.deviation > 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                                             {item.deviation > 0 ? '+' : ''}{item.deviation.toFixed(1)}%
                                         </span>

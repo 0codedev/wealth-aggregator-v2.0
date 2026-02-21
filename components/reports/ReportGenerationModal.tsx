@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Download, Sparkles, X, Check, Loader2, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { modalOverlayVariants, modalContentVariants } from '../ui/animations';
 import { generateMonthlyReport, generateAIAnalysis } from '../../services/ReportService';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { Investment, AggregatedData } from '../../types';
@@ -23,8 +25,6 @@ const ReportGenerationModal: React.FC<ReportGenerationModalProps> = ({
     const [includeAI, setIncludeAI] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [status, setStatus] = useState<string>('');
-
-    if (!isOpen) return null;
 
     const handleGenerate = async () => {
         setIsGenerating(true);
@@ -72,99 +72,117 @@ const ReportGenerationModal: React.FC<ReportGenerationModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800">
-                {/* Header */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <FileText className="text-indigo-600 dark:text-indigo-400" />
-                            Report Generator
-                        </h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Professional export for your records.</p>
-                    </div>
-                </div>
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto">
+                    <motion.div
+                        variants={modalOverlayVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+                        onClick={onClose}
+                    />
+                    <motion.div
+                        variants={modalContentVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 relative z-10"
+                    >
+                        {/* Header */}
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <FileText className="text-indigo-600 dark:text-indigo-400" />
+                                    Report Generator
+                                </h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Professional export for your records.</p>
+                            </div>
+                        </div>
 
-                {/* Body */}
-                <div className="p-6 space-y-6">
-                    {/* Period Selection */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Time Period</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {['MONTH', 'QUARTER', 'YTD'].map((p) => (
-                                <button
-                                    key={p}
-                                    onClick={() => setPeriod(p as any)}
-                                    className={`px-3 py-2 rounded-lg text-sm font-bold border transition-all ${period === p
-                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300'
+                        {/* Body */}
+                        <div className="p-6 space-y-6">
+                            {/* Period Selection */}
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Time Period</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['MONTH', 'QUARTER', 'YTD'].map((p) => (
+                                        <button
+                                            key={p}
+                                            onClick={() => setPeriod(p as any)}
+                                            className={`px-3 py-2 rounded-lg text-sm font-bold border transition-all ${period === p
+                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300'
+                                                }`}
+                                        >
+                                            {p === 'MONTH' ? 'Last Month' : p === 'QUARTER' ? 'Last Qtr' : 'YTD'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Options */}
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Content Options</label>
+
+                                <div
+                                    onClick={() => !isGenerating && setIncludeAI(!includeAI)}
+                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${includeAI
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300'
                                         }`}
                                 >
-                                    {p === 'MONTH' ? 'Last Month' : p === 'QUARTER' ? 'Last Qtr' : 'YTD'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Options */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Content Options</label>
-
-                        <div
-                            onClick={() => !isGenerating && setIncludeAI(!includeAI)}
-                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${includeAI
-                                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300'
-                                }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${includeAI ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                                    <Sparkles size={20} />
-                                </div>
-                                <div>
-                                    <p className={`font-bold ${includeAI ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-700 dark:text-slate-300'}`}>AI Market Commentary</p>
-                                    <p className="text-xs text-slate-500">Adds personalized insights (slower)</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${includeAI ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                            <Sparkles size={20} />
+                                        </div>
+                                        <div>
+                                            <p className={`font-bold ${includeAI ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-700 dark:text-slate-300'}`}>AI Market Commentary</p>
+                                            <p className="text-xs text-slate-500">Adds personalized insights (slower)</p>
+                                        </div>
+                                    </div>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${includeAI ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300'}`}>
+                                        {includeAI && <Check size={14} />}
+                                    </div>
                                 </div>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${includeAI ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300'}`}>
-                                {includeAI && <Check size={14} />}
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Status Feedback */}
-                    {status && (
-                        <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-sm text-slate-600 dark:text-slate-300 animate-in fade-in">
-                            {isGenerating && <Loader2 size={16} className="animate-spin text-indigo-600" />}
-                            {status}
+                            {/* Status Feedback */}
+                            {status && (
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-sm text-slate-600 dark:text-slate-300 animate-in fade-in">
+                                    {isGenerating && <Loader2 size={16} className="animate-spin text-indigo-600" />}
+                                    {status}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
-                {/* Footer */}
-                <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={isGenerating}
-                        className="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating}
-                        className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {isGenerating ? 'Generating...' : (
-                            <>
-                                <Download size={16} />
-                                Generate PDF
-                            </>
-                        )}
-                    </button>
+                        {/* Footer */}
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                            <button
+                                onClick={onClose}
+                                disabled={isGenerating}
+                                className="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleGenerate}
+                                disabled={isGenerating}
+                                className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isGenerating ? 'Generating...' : (
+                                    <>
+                                        <Download size={16} />
+                                        Generate PDF
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
                 </div>
-            </div>
-        </div>
+            )}
+        </AnimatePresence>
     );
 };
 

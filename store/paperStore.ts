@@ -24,7 +24,7 @@ interface PaperState {
   availableCash: number;
   positions: PaperPosition[];
   orders: PaperOrder[];
-  
+
   // Actions
   placeOrder: (symbol: string, type: 'BUY' | 'SELL', qty: number, price: number) => void;
   resetAccount: () => void;
@@ -43,7 +43,7 @@ export const usePaperStore = create<PaperState>()(
       placeOrder: (symbol, type, qty, price) => {
         set((state) => {
           const orderValue = qty * price;
-          
+
           // Basic Validation
           if (type === 'BUY' && state.availableCash < orderValue) {
             alert("Insufficient Buying Power");

@@ -3,12 +3,18 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
     Wallet, ChevronDown, ChevronRight, TrendingUp, Zap, Sparkles,
     LayoutDashboard, Edit2, Trash2, AlertTriangle, ArrowUpRight,
-    Keyboard, RefreshCw
+    Keyboard, RefreshCw, Box
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Investment, InvestmentType } from '../../../types';
 import { RiskEngine } from '../../../services/RiskEngine';
 import { useSettingsStore } from '../../../store/settingsStore';
 import Sparkline from '../../Sparkline';
+import { NoiseTexture } from '../../ui/NoiseTexture';
+
+// ============================================================================
+// Types & Interfaces
+// ============================================================================
 
 interface HoldingsViewProps {
     investments: Investment[];
@@ -17,8 +23,8 @@ interface HoldingsViewProps {
     onEditAsset: (inv: Investment, e: React.MouseEvent) => void;
     onDeleteAsset: (inv: Investment, e: React.MouseEvent) => void;
     onQuickUpdate?: (id: string, invData: Partial<Investment>) => void;
-    onRefreshRecurring?: () => void; // Kept in interface but unused here now
-    downloadCSV?: () => void; // Kept in interface but unused here now
+    onRefreshRecurring?: () => void;
+    downloadCSV?: () => void;
     formatCurrency: (val: number) => string;
     calculatePercentage: (part: number, total: number) => string;
     isPrivacyMode: boolean;
@@ -31,6 +37,11 @@ interface HoldingsViewProps {
     groupBy: 'NONE' | 'TYPE' | 'PLATFORM';
     viewMode: 'CARD' | 'TERMINAL';
     isSpotlightEnabled?: boolean;
+
+    // New Props for Profit Booking
+    onBookProfit?: (inv: Investment) => void;
+    archivedInvestments?: Investment[];
+    realizedPlMap?: Record<string, { pl: number, cost: number }>;
 }
 
 interface GroupedData {
@@ -39,16 +50,22 @@ interface GroupedData {
     items: Investment[];
 }
 
+// ============================================================================
+// Component
+// ============================================================================
+
 export const HoldingsView: React.FC<HoldingsViewProps> = ({
     investments, totalAssets, onEditAsset, onDeleteAsset, onQuickUpdate,
     formatCurrency, calculatePercentage, isPrivacyMode,
     PrivacyValue, setSimulatorAsset,
-    searchTerm, filterType, groupBy, viewMode, isSpotlightEnabled = true
+    searchTerm, filterType, groupBy, viewMode, isSpotlightEnabled = true,
+    onBookProfit, archivedInvestments = [], realizedPlMap = {}
 }) => {
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [selectedRowIndex, setSelectedRowIndex] = useState<number>(-1);
     const [editingCell, setEditingCell] = useState<{ id: string, field: 'investedAmount' | 'currentValue' } | null>(null);
     const [editValue, setEditValue] = useState('');
+    const [showArchived, setShowArchived] = useState(false);
 
     const { bullionCap, greedKillerRoi } = useSettingsStore();
 
@@ -79,11 +96,15 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
     const [sortConfig, setSortConfig] = useState<{ key: keyof Investment | 'profit'; direction: 'asc' | 'desc' } | null>(null);
 
     const handleSort = (key: keyof Investment | 'profit') => {
-        let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc';
-        }
-        setSortConfig({ key, direction });
+        setSortConfig(current => {
+            if (!current || current.key !== key) {
+                return { key, direction: 'asc' };
+            }
+            if (current.direction === 'asc') {
+                return { key, direction: 'desc' };
+            }
+            return null; // Reset to default
+        });
     };
 
     const sortedInvestments = useMemo(() => {
@@ -114,6 +135,49 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
         }
         return sortableItems;
     }, [filteredInvestments, sortConfig]);
+
+    const sortedArchivedInvestments = useMemo(() => {
+        let sortableItems = [...archivedInvestments];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                let aValue: any = a[sortConfig.key as keyof Investment];
+                let bValue: any = b[sortConfig.key as keyof Investment];
+
+                // Special handling for Profit (Realized)
+                if (sortConfig.key === 'profit') {
+                    aValue = realizedPlMap[a.id]?.pl ?? 0;
+                    bValue = realizedPlMap[b.id]?.pl ?? 0;
+                }
+                // Special handling for Current Value (Exit Value = Cost + Profit)
+                else if (sortConfig.key === 'currentValue') {
+                    const aCost = realizedPlMap[a.id]?.cost ?? a.investedAmount;
+                    const bCost = realizedPlMap[b.id]?.cost ?? b.investedAmount;
+                    const aProfit = realizedPlMap[a.id]?.pl ?? 0;
+                    const bProfit = realizedPlMap[b.id]?.pl ?? 0;
+                    aValue = aCost + aProfit;
+                    bValue = bCost + bProfit;
+                }
+                // Special handling for Invested (Cost Basis)
+                else if (sortConfig.key === 'investedAmount') {
+                    aValue = realizedPlMap[a.id]?.cost ?? a.investedAmount;
+                    bValue = realizedPlMap[b.id]?.cost ?? b.investedAmount;
+                }
+
+                // Handle strings (case-insensitive)
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return sortConfig.direction === 'asc'
+                        ? aValue.localeCompare(bValue)
+                        : bValue.localeCompare(aValue);
+                }
+
+                // Handle numbers
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [archivedInvestments, sortConfig, realizedPlMap]);
 
     const groupedInvestments = useMemo(() => {
         if (groupBy === 'NONE') return null;
@@ -173,9 +237,25 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
         setEditingCell(null);
     };
 
-    const renderTerminalRow = (inv: Investment, index: number) => {
-        const profit = inv.currentValue - inv.investedAmount;
-        const profitPercent = calculatePercentage(profit, inv.investedAmount);
+    const renderTerminalRow = (inv: Investment, index: number, isArchived = false) => {
+        let profit = 0;
+        let profitPercent = "0.00";
+        let investedAmount = inv.investedAmount;
+        let currentValue = inv.currentValue;
+
+        if (isArchived) {
+            profit = realizedPlMap[inv.id]?.pl ?? 0;
+            const costBasis = realizedPlMap[inv.id]?.cost ?? inv.investedAmount;
+            investedAmount = costBasis;
+            profitPercent = (costBasis > 0)
+                ? ((profit / costBasis) * 100).toFixed(2)
+                : "∞";
+            currentValue = costBasis + profit;
+        } else {
+            profit = inv.currentValue - inv.investedAmount;
+            profitPercent = calculatePercentage(profit, inv.investedAmount);
+        }
+
         const isProfit = profit >= 0;
         const portfolioShare = calculatePercentage(inv.currentValue, totalAssets);
         const isSelected = index === selectedRowIndex;
@@ -183,58 +263,81 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
         const isEditingCurrent = editingCell?.id === inv.id && editingCell?.field === 'currentValue';
 
         return (
-            <tr
+            <motion.tr
                 key={inv.id}
-                className={`group border-b border-slate-100 dark:border-slate-800 transition-colors ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
-                onClick={() => setSelectedRowIndex(index)}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.03 }}
+                className={`group border-b border-slate-200 dark:border-slate-800/50 transition-colors ${isSelected ? 'bg-indigo-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'} ${isArchived ? 'opacity-60 grayscale' : ''}`}
+                onClick={() => !isArchived && setSelectedRowIndex(index)}
             >
-                <td className="py-3 px-4 relative cursor-pointer" onClick={() => setSimulatorAsset(inv)}>
-                    {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div>}
+                <td className="py-3 px-4 relative cursor-pointer" onClick={() => !isArchived && setSimulatorAsset(inv)}>
+                    {isSelected && <motion.div layoutId="activeRow" className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />}
                     <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-lg ${isProfit ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                        <div className={`p-1.5 rounded-lg ${isProfit ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                             {inv.type === InvestmentType.STOCKS ? <TrendingUp size={14} /> : inv.type === InvestmentType.CRYPTO ? <Zap size={14} /> : <Wallet size={14} />}
                         </div>
                         <div>
-                            <p className="font-bold text-slate-900 dark:text-white text-sm">{inv.name}</p>
+                            <p className="font-bold text-white text-sm">{inv.name}</p>
                             <p className="text-[10px] text-slate-500 uppercase">{inv.type}</p>
                         </div>
                     </div>
                 </td>
-                <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{inv.platform}</td>
-                <td className="py-3 px-4 text-right font-mono text-sm text-slate-600 dark:text-slate-400 cursor-cell hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => startEditing(inv.id, 'investedAmount', inv.investedAmount)}>
-                    {isEditingInvested ? <input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={saveInlineEdit} autoFocus className="w-24 bg-white dark:bg-slate-950 border border-indigo-500 rounded px-1 py-0.5 text-right outline-none" /> : <PrivacyValue value={inv.investedAmount} isPrivacyMode={isPrivacyMode} />}
+                <td className="py-3 px-4 text-sm text-slate-400">{inv.platform}</td>
+                <td className="py-3 px-4 text-right font-mono text-sm text-slate-400 cursor-cell hover:bg-slate-800/50 hover:text-white transition-colors" onClick={() => !isArchived && startEditing(inv.id, 'investedAmount', inv.investedAmount)}>
+                    {isEditingInvested ? <input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={saveInlineEdit} autoFocus className="w-24 bg-slate-900 border border-indigo-500 rounded px-1 py-0.5 text-right outline-none text-white focus:ring-1 focus:ring-indigo-500" /> : <PrivacyValue value={investedAmount} isPrivacyMode={isPrivacyMode} />}
                 </td>
-                <td className="py-3 px-4 text-right font-mono text-sm font-bold text-slate-900 dark:text-white cursor-cell hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => startEditing(inv.id, 'currentValue', inv.currentValue)}>
-                    {isEditingCurrent ? <input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={saveInlineEdit} autoFocus className="w-24 bg-white dark:bg-slate-950 border border-indigo-500 rounded px-1 py-0.5 text-right outline-none" /> : <PrivacyValue value={inv.currentValue} isPrivacyMode={isPrivacyMode} />}
+                <td className="py-3 px-4 text-right font-mono text-sm font-bold text-white cursor-cell hover:bg-slate-800/50 hover:text-indigo-400 transition-colors" onClick={() => !isArchived && startEditing(inv.id, 'currentValue', inv.currentValue)}>
+                    {isEditingCurrent ? <input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={saveInlineEdit} autoFocus className="w-24 bg-slate-900 border border-indigo-500 rounded px-1 py-0.5 text-right outline-none text-white focus:ring-1 focus:ring-indigo-500" /> : <PrivacyValue value={currentValue} isPrivacyMode={isPrivacyMode} />}
                 </td>
                 <td className="py-3 px-4 text-right">
-                    <div className={`font-mono text-sm font-bold ${isProfit ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>{isProfit ? '+' : ''}{profitPercent}%</div>
-                    <div className={`text-[10px] ${isProfit ? 'text-emerald-600/70 dark:text-emerald-400/70' : 'text-rose-600/70 dark:text-rose-400/70'}`}>{isProfit ? '+' : ''}{formatCurrency(profit)}</div>
+                    <div className={`font-mono text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>{isProfit ? '+' : ''}{profitPercent}%</div>
+                    <div className={`text-[10px] ${isProfit ? 'text-emerald-500/60' : 'text-rose-500/60'}`}>{isProfit ? '+' : ''}{formatCurrency(profit)}</div>
                 </td>
                 <td className="py-3 px-4 text-center">
-                    <div className="flex justify-center">
+                    <div className="flex justify-center opacity-60 group-hover:opacity-100 transition-opacity">
                         <Sparkline trend={isProfit ? 'UP' : 'DOWN'} width={60} height={20} />
                     </div>
                 </td>
                 <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                         <span className="text-xs font-medium text-slate-500">{portfolioShare}%</span>
-                        <div className="w-12 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div className="h-full bg-indigo-500" style={{ width: `${Math.max(0, Number(portfolioShare))}%` }}></div></div>
+                        <div className="w-12 h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-indigo-500" style={{ width: `${Math.max(0, Number(portfolioShare))}%` }}></div></div>
                     </div>
                 </td>
                 <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); onEditAsset(inv, e); }} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded text-slate-400 hover:text-indigo-500"><Edit2 size={14} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); onDeleteAsset(inv, e); }} className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
-                    </div>
+                    {!isArchived && (
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); onBookProfit?.(inv); }} className="p-1.5 hover:bg-emerald-500/10 rounded text-slate-500 hover:text-emerald-400 transition-colors" title="Book Profit"><ArrowUpRight size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onEditAsset(inv, e); }} className="p-1.5 hover:bg-indigo-500/10 rounded text-slate-500 hover:text-indigo-400 transition-colors"><Edit2 size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onDeleteAsset(inv, e); }} className="p-1.5 hover:bg-rose-500/10 rounded text-slate-500 hover:text-rose-400 transition-colors"><Trash2 size={14} /></button>
+                        </div>
+                    )}
+                    {isArchived && (
+                        <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">Archived</span>
+                    )}
                 </td>
-            </tr>
+            </motion.tr>
         );
     };
 
-    const renderCardItem = (inv: Investment) => {
-        const profit = inv.currentValue - inv.investedAmount;
-        const profitPercent = calculatePercentage(profit, inv.investedAmount);
+    const renderCardItem = (inv: Investment, isArchived = false) => {
+        let profit = 0;
+        let profitPercent = "0.00";
+        let currentValue = inv.currentValue;
+
+        if (isArchived) {
+            profit = realizedPlMap[inv.id]?.pl ?? 0;
+            const costBasis = realizedPlMap[inv.id]?.cost ?? inv.investedAmount;
+            profitPercent = (costBasis > 0)
+                ? ((profit / costBasis) * 100).toFixed(2)
+                : "∞";
+            currentValue = costBasis + profit;
+        } else {
+            profit = inv.currentValue - inv.investedAmount;
+            profitPercent = calculatePercentage(profit, inv.investedAmount);
+        }
+
         const isProfit = profit >= 0;
         const { shouldBookProfit, isBubbleRisk } = riskEngine.analyzeAsset(inv);
 
@@ -245,54 +348,78 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
         else if (inv.type === InvestmentType.REAL_ESTATE) Icon = LayoutDashboard;
 
         return (
-            <div
+            <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 key={inv.id}
-                onClick={() => setSimulatorAsset(inv)}
-                className={`bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all duration-300 group relative overflow-hidden cursor-pointer ${isSpotlightEnabled ? 'hover:shadow-lg dark:hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:border-indigo-200 dark:hover:border-indigo-500/50' : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'}`}
+                onClick={() => !isArchived && setSimulatorAsset(inv)}
+                className={`bg-white dark:bg-slate-900/60 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-white/5 transition-all duration-300 group relative overflow-hidden cursor-pointer ${isSpotlightEnabled && !isArchived ? 'hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:border-indigo-500/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'} ${isArchived ? 'opacity-60 grayscale' : ''}`}
             >
                 <div className="flex justify-between items-start mb-4 relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-xl ${isProfit ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'}`}><Icon size={20} /></div>
+                        <div className={`p-2.5 rounded-xl ${isProfit ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}><Icon size={20} /></div>
                         <div>
-                            <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate max-w-[140px] flex items-center gap-1">{inv.name}{isBubbleRisk && <AlertTriangle size={12} className="text-fuchsia-500" />}</h4>
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate max-w-[140px] flex items-center gap-1">{inv.name}{isBubbleRisk && !isArchived && <AlertTriangle size={12} className="text-fuchsia-500 animate-pulse" />}</h4>
                             <p className="text-xs text-slate-500">{inv.platform}</p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="font-bold text-slate-900 dark:text-white text-base"><PrivacyValue value={inv.currentValue} isPrivacyMode={isPrivacyMode} /></p>
-                        <p className={`text-xs font-bold ${isProfit ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-600 dark:text-rose-500'}`}>{isProfit ? '+' : ''}{profitPercent}%</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-base"><PrivacyValue value={currentValue} isPrivacyMode={isPrivacyMode} /></p>
+                        <p className={`text-xs font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>{isProfit ? '+' : ''}{profitPercent}%</p>
                     </div>
                 </div>
 
-                {/* Sparkline Overlay */}
-                {isSpotlightEnabled && (
-                    <div className="absolute bottom-12 left-0 right-0 h-8 opacity-10 pointer-events-none">
+                {isSpotlightEnabled && !isArchived && (
+                    <div className="absolute bottom-12 left-0 right-0 h-8 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
                         <Sparkline trend={isProfit ? 'UP' : 'DOWN'} width={300} height={32} />
                     </div>
                 )}
 
-                {shouldBookProfit && (<div className="mb-3"><button className="w-full flex items-center justify-center gap-1 text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 py-1 rounded-lg hover:bg-emerald-500/20 transition-colors"><ArrowUpRight size={12} /> TAKE PROFIT SIGNAL</button></div>)}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800 relative z-10">
-                    <div className="flex items-center gap-2">{inv.recurring?.isEnabled && <span className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded flex items-center gap-1"><RefreshCw size={10} /> SIP</span>}<span className="text-[10px] text-slate-400 font-mono">{calculatePercentage(inv.currentValue, totalAssets)}% of Port.</span></div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); onEditAsset(inv, e); }} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded text-slate-400 hover:text-indigo-500"><Edit2 size={14} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); onDeleteAsset(inv, e); }} className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded text-slate-400 hover:text-rose-500"><Trash2 size={14} /></button>
-                    </div>
+                {!isArchived && shouldBookProfit && (<div className="mb-3"><button onClick={(e) => { e.stopPropagation(); onBookProfit?.(inv); }} className="w-full flex items-center justify-center gap-1 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 py-1.5 rounded-lg hover:bg-emerald-500/20 transition-colors"><ArrowUpRight size={12} /> TAKE PROFIT</button></div>)}
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/5 relative z-10">
+                    <div className="flex items-center gap-2">{inv.recurring?.isEnabled && <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded flex items-center gap-1"><RefreshCw size={10} /> SIP</span>}<span className="text-[10px] text-slate-500 font-mono">{calculatePercentage(inv.currentValue, totalAssets)}%</span></div>
+                    {!isArchived && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); onBookProfit?.(inv); }} className="p-1.5 hover:bg-emerald-500/10 rounded text-slate-400 hover:text-emerald-400 transition-colors" title="Book Profit"><ArrowUpRight size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onEditAsset(inv, e); }} className="p-1.5 hover:bg-indigo-500/10 rounded text-slate-400 hover:text-indigo-400 transition-colors"><Edit2 size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onDeleteAsset(inv, e); }} className="p-1.5 hover:bg-rose-500/10 rounded text-slate-400 hover:text-rose-400 transition-colors"><Trash2 size={14} /></button>
+                        </div>
+                    )}
+                    {isArchived && (
+                        <span className="text-xs font-bold text-amber-500">Archived</span>
+                    )}
                 </div>
-            </div>
+            </motion.div>
         );
     };
 
+    const SortIcon = ({ columnKey }: { columnKey: keyof Investment | 'profit' }) => {
+        if (sortConfig?.key !== columnKey) return <span className="ml-1 text-slate-600 select-none opacity-0 group-hover:opacity-100 transition-opacity">⇅</span>;
+        return <span className="ml-1 text-indigo-400">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+    };
+
+    const SortableHeader = ({ label, columnKey, align = 'left', className = '' }: { label: string, columnKey: keyof Investment | 'profit', align?: 'left' | 'right' | 'center', className?: string }) => (
+        <th
+            className={`py-3 px-4 text-xs font-bold text-slate-500 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none group ${align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'} ${className}`}
+            onClick={() => handleSort(columnKey)}
+        >
+            {label} <SortIcon columnKey={columnKey} />
+        </th>
+    );
+
     const TableHeader = () => (
-        <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-white/5 relative">
             <tr>
-                <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Asset</th>
-                <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase">Platform</th>
-                <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase text-right">Invested</th>
-                <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase text-right">Current</th>
-                <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase text-right">P&L</th>
+                <SortableHeader label="Asset" columnKey="name" />
+                <SortableHeader label="Platform" columnKey="platform" />
+                <SortableHeader label="Invested" columnKey="investedAmount" align="right" />
+                <SortableHeader label="Current" columnKey="currentValue" align="right" />
+                <SortableHeader label="P&L" columnKey="profit" align="right" />
                 <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase text-center">Trend</th>
-                <th className="py-3 px-4 text-xs font-bold text-slate-500 uppercase text-right">Allocation</th>
+                <SortableHeader label="Alloc." columnKey="currentValue" align="right" />
                 <th className="py-3 px-4"></th>
             </tr>
         </thead>
@@ -302,61 +429,68 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
         <div className="space-y-4">
             {viewMode === 'TERMINAL' && (
                 <div className="flex items-center gap-4 text-xs text-slate-500 px-2 mb-2 animate-in fade-in">
-                    <div className="flex items-center gap-1"><span className="p-1 bg-slate-200 dark:bg-slate-800 rounded"><Keyboard size={12} /></span> <span>Navigate</span></div>
-                    <div className="flex items-center gap-1"><span className="p-1 bg-slate-200 dark:bg-slate-800 rounded">Enter</span> <span>Simulate</span></div>
-                    <div className="flex items-center gap-1"><span className="p-1 bg-slate-200 dark:bg-slate-800 rounded">2</span> <span>Edit Value</span></div>
+                    <div className="flex items-center gap-1"><span className="p-1 bg-slate-800 rounded border border-slate-700"><Keyboard size={10} /></span> <span>Nav</span></div>
+                    <div className="flex items-center gap-1"><span className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">Enter</span> <span>Simulate</span></div>
+                    <div className="flex items-center gap-1"><span className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">2</span> <span>Edit</span></div>
                 </div>
             )}
 
-            {investments.length === 0 ? (
-                <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-300 mb-4"><Wallet size={40} /></div>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Your portfolio is empty.</p>
+            {investments.length === 0 && !showArchived ? (
+                <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800/50 text-slate-500 mb-4"><Box size={32} /></div>
+                    <p className="text-slate-400 font-medium">Your portfolio is empty.</p>
                 </div>
-            ) : filteredInvestments.length === 0 ? (
-                <div className="text-center py-20"><p className="text-slate-500 dark:text-slate-400">No assets match your search.</p></div>
+            ) : filteredInvestments.length === 0 && !showArchived ? (
+                <div className="text-center py-20"><p className="text-slate-500">No assets match your search.</p></div>
             ) : groupBy === 'NONE' ? (
                 viewMode === 'TERMINAL' ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                            <TableHeader />
-                            <tbody>{sortedInvestments.map((inv, index) => renderTerminalRow(inv, index))}</tbody>
-                        </table>
+                    <div className="bg-slate-900/40 backdrop-blur-sm rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative">
+                        <NoiseTexture opacity={0.02} />
+                        <div className="overflow-x-auto w-full">
+                            <table className="w-full text-left border-collapse relative z-10 min-w-[800px]">
+                                <TableHeader />
+                                <tbody>{sortedInvestments.map((inv, index) => renderTerminalRow(inv, index))}</tbody>
+                            </table>
+                        </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{filteredInvestments.map(inv => renderCardItem(inv))}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                        {sortedInvestments.map(inv => renderCardItem(inv))}
+                    </div>
                 )
             ) : (
                 groupedInvestments && Object.entries(groupedInvestments).map(([groupKey, groupData]: [string, GroupedData]) => (
-                    <div key={groupKey} className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900/50 shadow-sm transition-all hover:shadow-md">
+                    <div key={groupKey} className="mb-4 rounded-2xl border border-white/5 overflow-hidden bg-slate-900/30 shadow-lg transition-all hover:border-slate-700">
                         <div
-                            className="p-4 bg-slate-50/80 dark:bg-slate-800/40 backdrop-blur-sm flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors select-none"
+                            className="p-4 bg-slate-900/50 backdrop-blur-md flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition-colors select-none"
                             onClick={() => toggleGroup(groupKey)}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-xl transition-transform duration-200 ${expandedGroups[groupKey] ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 rotate-90' : 'bg-slate-200/50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'}`}>
+                                <div className={`p-2 rounded-xl transition-transform duration-200 ${expandedGroups[groupKey] ? 'bg-indigo-500/20 text-indigo-400 rotate-90' : 'bg-slate-800 text-slate-400'}`}>
                                     <ChevronRight size={16} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 dark:text-white text-base leading-tight">{groupKey}</h3>
+                                    <h3 className="font-bold text-white text-base leading-tight">{groupKey}</h3>
                                     <p className="text-xs text-slate-500 font-medium">{groupData.items.length} assets • {formatCurrency(groupData.totalCurr)}</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className={`text-sm font-mono font-bold ${(groupData.totalCurr - groupData.totalInv) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                <div className={`text-sm font-mono font-bold ${(groupData.totalCurr - groupData.totalInv) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                     {(groupData.totalCurr - groupData.totalInv) >= 0 ? '+' : ''}{calculatePercentage(groupData.totalCurr - groupData.totalInv, groupData.totalInv)}%
                                 </div>
                             </div>
                         </div>
 
                         {expandedGroups[groupKey] && (
-                            <div className="p-4 bg-slate-100/50 dark:bg-black/20 border-t border-slate-200 dark:border-slate-800 animate-in slide-in-from-top-1 duration-200">
+                            <div className="p-4 bg-black/20 border-t border-white/5 animate-in slide-in-from-top-1 duration-200">
                                 {viewMode === 'TERMINAL' ? (
-                                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                                        <table className="w-full text-left border-collapse">
-                                            <TableHeader />
-                                            <tbody>{groupData.items.map((inv, idx) => renderTerminalRow(inv, idx))}</tbody>
-                                        </table>
+                                    <div className="bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden">
+                                        <div className="overflow-x-auto w-full">
+                                            <table className="w-full text-left border-collapse min-w-[800px]">
+                                                <TableHeader />
+                                                <tbody>{groupData.items.map((inv, idx) => renderTerminalRow(inv, idx))}</tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -367,6 +501,40 @@ export const HoldingsView: React.FC<HoldingsViewProps> = ({
                         )}
                     </div>
                 ))
+            )}
+
+            {/* Archived Section Toggle */}
+            {archivedInvestments.length > 0 && (
+                <div className="mt-8 border-t border-slate-800 pt-6">
+                    <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className="flex items-center gap-2 text-slate-500 hover:text-slate-300 transition-colors mb-4 text-sm font-semibold"
+                    >
+                        <ChevronDown size={16} className={`transition-transform ${showArchived ? 'rotate-180' : ''}`} />
+                        Show Archived Holdings ({archivedInvestments.length})
+                    </button>
+
+                    {showArchived && (
+                        <div className="animate-in fade-in slide-in-from-top-2">
+                            {viewMode === 'TERMINAL' ? (
+                                <div>
+                                    <div className="bg-slate-900/20 rounded-2xl border border-white/5 overflow-hidden shadow-sm opacity-60 hover:opacity-100 transition-opacity">
+                                        <div className="overflow-x-auto w-full">
+                                            <table className="w-full text-left border-collapse min-w-[800px]">
+                                                <TableHeader />
+                                                <tbody>{sortedArchivedInvestments.map((inv, index) => renderTerminalRow(inv, index, true))}</tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 opacity-60 hover:opacity-100 transition-opacity">
+                                    {sortedArchivedInvestments.map(inv => renderCardItem(inv, true))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );

@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
                         {isAuthenticated ? 'Welcome Back' : 'Wealth Aggregator'}
                     </h1>
                     <p className="text-slate-400 text-sm">
-                        {isAuthenticated ? 'Enter PIN to unlock your vault' : 'Secure Terminal Access'}
+                        {isAuthenticated ? 'Enter PIN to unlock your vault' : 'Start Privacy Mode'}
                     </p>
                 </div>
 
@@ -79,16 +79,16 @@ const LoginPage: React.FC = () => {
                         type="submit"
                         disabled={pin.length !== 4 || isLoading}
                         className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all transform ${pin.length === 4
-                                ? 'bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.02] shadow-lg shadow-indigo-600/30'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                            ? 'bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.02] shadow-lg shadow-indigo-600/30'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                             }`}
                     >
                         {isLoading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
                             <>
-                                {isAuthenticated ? <Unlock size={18} /> : <Fingerprint size={18} />}
-                                {isAuthenticated ? 'Unlock Vault' : 'Authenticate'}
+                                {isAuthenticated ? <Unlock size={18} /> : <ShieldCheck size={18} />}
+                                {isAuthenticated ? 'Unlock Vault' : 'Enter Privacy Mode'}
                             </>
                         )}
                     </button>
@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
 
                 {/* Footer */}
                 <div className="mt-8 text-xs text-slate-500 text-center">
-                    <p>Protected by Client-Side Encryption</p>
+                    <p>Note: This provides UI-level privacy. Data remains accessible via browser storage tools.</p>
                     <p className="mt-1 opacity-50">Default PIN: 1234</p>
                 </div>
             </div>

@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import React, { useState, useEffect } from 'react';
+import { liveQuery } from 'dexie';
 import { db, Friend } from '../../database';
 import { Users, Plus, Wallet, ArrowUpRight, ArrowDownLeft, Trash2, History, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '../../utils/helpers';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const IPOVaultWidget: React.FC = () => {
-    const friends = useLiveQuery(() => db.friends.toArray());
+    const [friends, setFriends] = useState<Friend[]>([]);
+
+    useEffect(() => {
+        const subscription = liveQuery(() => db.friends.toArray()).subscribe(setFriends);
+        return () => subscription.unsubscribe();
+    }, []);
     const [isAddMode, setIsAddMode] = useState(false);
     const [newFriendName, setNewFriendName] = useState('');
     const [initialBalance, setInitialBalance] = useState('');

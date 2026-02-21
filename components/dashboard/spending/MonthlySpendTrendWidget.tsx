@@ -122,7 +122,7 @@ export const MonthlySpendTrendWidget: React.FC<MonthlySpendTrendWidgetProps> = (
                         <Tooltip
                             contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
                             itemStyle={{ fontSize: '12px' }}
-                            formatter={(value: number, name: string) => [formatCurrency(value), name === 'current' ? 'This Month' : 'Last Month']}
+                            formatter={((value: number | undefined, name: string) => value ? [formatCurrency(value), name === 'current' ? 'This Month' : 'Last Month'] : ['', '']) as any}
                             labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
                         />
                         <Legend

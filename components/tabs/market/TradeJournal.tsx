@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
 import { db, PaperTrade } from '../../../database';
 import {
     ClipboardList, Plus, TrendingUp, TrendingDown,
@@ -21,9 +21,22 @@ export const TradeJournal: React.FC = () => {
     const [qty, setQty] = useState<number | ''>('');
     const [notes, setNotes] = useState('');
 
-    // Fetch Data
-    const openPositions = useLiveQuery(() => db.paper_trades.where('status').equals('OPEN').toArray()) || [];
-    const closedPositions = useLiveQuery(() => db.paper_trades.where('status').equals('CLOSED').reverse().toArray()) || [];
+    // Fetch Data (Manual Subscription to fix crash)
+    const [openPositions, setOpenPositions] = useState<PaperTrade[]>([]);
+    const [closedPositions, setClosedPositions] = useState<PaperTrade[]>([]);
+
+    React.useEffect(() => {
+        const subOpen = liveQuery(() => db.paper_trades.where('status').equals('OPEN').toArray())
+            .subscribe(data => setOpenPositions(data));
+
+        const subClosed = liveQuery(() => db.paper_trades.where('status').equals('CLOSED').reverse().toArray())
+            .subscribe(data => setClosedPositions(data));
+
+        return () => {
+            subOpen.unsubscribe();
+            subClosed.unsubscribe();
+        };
+    }, []);
 
     // Stats
     const stats = useMemo(() => {
@@ -96,11 +109,11 @@ export const TradeJournal: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-300">
             {/* Header Plate */}
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                            <ClipboardList className="text-fuchsia-400" size={28} />
+                            <ClipboardList className="text-indigo-400" size={28} />
                             Trade Journal
                         </h2>
                         <p className="text-slate-400 mt-1">
@@ -117,7 +130,7 @@ export const TradeJournal: React.FC = () => {
                         </div>
                         <button
                             onClick={() => setIsOrderFormOpen(true)}
-                            className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-4 py-2 rounded-xl font-bold shadow-lg shadow-fuchsia-500/20 flex items-center gap-2 transition-all active:scale-95"
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95"
                         >
                             <Plus size={18} /> Log Trade
                         </button>
@@ -263,7 +276,7 @@ export const TradeJournal: React.FC = () => {
                 {/* Right: Order Form & Insights */}
                 <div className="space-y-6">
                     {/* Order Form */}
-                    <div className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm ${isOrderFormOpen ? 'ring-2 ring-fuchsia-500' : ''}`}>
+                    <div className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm ${isOrderFormOpen ? 'ring-2 ring-indigo-500' : ''}`}>
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Manual Entry</h3>
 
                         <div className="space-y-4">
@@ -274,7 +287,7 @@ export const TradeJournal: React.FC = () => {
                                     value={ticker}
                                     onChange={(e) => setTicker(e.target.value)}
                                     placeholder="e.g. RELIANCE"
-                                    className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-bold uppercase outline-none focus:border-fuchsia-500"
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-bold uppercase outline-none focus:border-indigo-500"
                                 />
                             </div>
 
@@ -300,7 +313,7 @@ export const TradeJournal: React.FC = () => {
                                         type="number"
                                         value={price}
                                         onChange={(e) => setPrice(parseFloat(e.target.value) || '')}
-                                        className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-fuchsia-500"
+                                        className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500"
                                     />
                                 </div>
                                 <div>
@@ -309,7 +322,7 @@ export const TradeJournal: React.FC = () => {
                                         type="number"
                                         value={qty}
                                         onChange={(e) => setQty(parseFloat(e.target.value) || '')}
-                                        className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-fuchsia-500"
+                                        className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500"
                                     />
                                 </div>
                             </div>
@@ -320,7 +333,7 @@ export const TradeJournal: React.FC = () => {
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     placeholder="Why this trade? Setup? Stop loss?"
-                                    className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-fuchsia-500 text-sm h-20 resize-none"
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm h-20 resize-none"
                                 />
                             </div>
 

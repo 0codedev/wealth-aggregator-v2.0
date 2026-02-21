@@ -28,18 +28,18 @@ const SmartActionCard: React.FC<{ action: SmartAction; onExecute: (id: string) =
             <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm`} />
             <button
                 onClick={() => onExecute(action.id)}
-                className={`w-full relative flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-600 transition-all active:scale-[0.98] text-left overflow-hidden`}
+                className={`w-full relative flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 transition-all active:scale-[0.98] text-left overflow-hidden`}
             >
                 {/* Priority Indicator Line */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${config.bg} ${config.color}`} />
 
-                <div className={`w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                     {action.icon}
                 </div>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                        <span className="text-xs font-bold text-white truncate group-hover:text-indigo-300 transition-colors">{action.title}</span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-white truncate group-hover:text-indigo-500 dark:group-hover:text-indigo-300 transition-colors">{action.title}</span>
                         {action.priority === 'high' && (
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
                         )}
@@ -47,7 +47,7 @@ const SmartActionCard: React.FC<{ action: SmartAction; onExecute: (id: string) =
                     <p className="text-[10px] text-slate-500 font-medium line-clamp-1">{action.description}</p>
                 </div>
 
-                <div className="w-6 h-6 rounded-full border border-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-indigo-500 group-hover:border-indigo-500 group-hover:text-white transition-all">
+                <div className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-indigo-500 group-hover:border-indigo-500 group-hover:text-white transition-all">
                     <ArrowRight size={10} className="-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
                 </div>
             </button>
@@ -90,20 +90,20 @@ const SmartActionsWidget: React.FC<SmartActionsWidgetProps> = ({ onQuickAction }
     };
 
     return (
-        <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5 h-full flex flex-col relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 h-full flex flex-col relative overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between mb-4 relative z-10">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-950/30 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-lg shadow-indigo-900/10">
+                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl flex items-center justify-center border border-indigo-200 dark:border-indigo-500/20 shadow-lg shadow-indigo-100 dark:shadow-indigo-900/10">
                         <Command size={20} className="text-indigo-400" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-wider">Command</h3>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Command</h3>
                         <p className="text-[10px] text-indigo-400/80 font-mono">Action Deck</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-900 border border-slate-800">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                     <Sparkles size={10} className="text-amber-400" />
                     <span className="text-[10px] font-bold text-slate-400">{smartActions.length} Pending</span>
                 </div>
@@ -121,7 +121,7 @@ const SmartActionsWidget: React.FC<SmartActionsWidgetProps> = ({ onQuickAction }
                             <Check size={32} className="text-emerald-500" />
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-white">All Clear</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">All Clear</p>
                             <p className="text-xs text-slate-500">Zero pending actions.</p>
                         </div>
                     </div>

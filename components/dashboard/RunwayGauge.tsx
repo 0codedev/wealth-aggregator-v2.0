@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTransactions } from '../../contexts/TransactionContext';
 import { db } from '../../database';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { liveQuery } from 'dexie';
+import { Investment } from '../../types';
 import { Skull, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '../../utils/helpers';
 
@@ -18,7 +19,12 @@ export const RunwayGauge: React.FC = () => {
     }, [transactions]);
 
     // 2. Get Liquid Assets
-    const investments = useLiveQuery(() => db.investments.toArray());
+    const [investments, setInvestments] = useState<Investment[]>([]);
+
+    useEffect(() => {
+        const subscription = liveQuery(() => db.investments.toArray()).subscribe(setInvestments);
+        return () => subscription.unsubscribe();
+    }, []);
     const liquidAssets = useMemo(() => {
         if (!investments) return 0;
         return investments

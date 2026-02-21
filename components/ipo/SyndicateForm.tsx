@@ -8,7 +8,7 @@ interface SyndicateFormProps {
     setFormData: (data: Partial<IPOApplication>) => void;
     handleAdd: (e: React.FormEvent) => void;
     formError: string | null;
-    applicantInputRef: React.RefObject<HTMLInputElement>;
+    applicantInputRef: React.RefObject<HTMLInputElement | null>;
     pastApplicants: string[];
     pastUPIs: string[];
     setFormError: (error: string | null) => void; // Added implicitly by original usage
