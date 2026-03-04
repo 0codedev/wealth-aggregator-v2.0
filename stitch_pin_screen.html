@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Secure Finance PIN Entry</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#020617",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<!-- Main Container (Simulating Mobile Viewport) -->
+<div class="relative flex h-screen w-full max-w-md mx-auto flex-col px-8 pt-16 pb-12 justify-between">
+<!-- Header / Security Icon -->
+<div class="flex flex-col items-center gap-6">
+<div class="flex items-center justify-center size-14 rounded-full bg-primary/10 text-primary border border-primary/20">
+<span class="material-symbols-outlined text-[32px] font-light">
+                    shield_lock
+                </span>
+</div>
+<div class="text-center space-y-2">
+<p class="text-slate-500 dark:text-slate-400 text-lg font-medium tracking-wide">Welcome Back</p>
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Enter PIN</h1>
+</div>
+<!-- PIN Indicators -->
+<div class="flex gap-6 mt-8">
+<!-- Filled State -->
+<div class="size-4 rounded-full bg-primary ring-4 ring-primary/20"></div>
+<!-- Filled State -->
+<div class="size-4 rounded-full bg-primary ring-4 ring-primary/20"></div>
+<!-- Empty State -->
+<div class="size-4 rounded-full border-2 border-slate-300 dark:border-slate-700 bg-transparent"></div>
+<!-- Empty State -->
+<div class="size-4 rounded-full border-2 border-slate-300 dark:border-slate-700 bg-transparent"></div>
+</div>
+</div>
+<!-- Numeric Keypad Container -->
+<div class="w-full mt-auto">
+<div class="grid grid-cols-3 gap-y-4 gap-x-2">
+<!-- Row 1 -->
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">1</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">2</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">3</span>
+</button>
+<!-- Row 2 -->
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">4</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">5</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">6</span>
+</button>
+<!-- Row 3 -->
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">7</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">8</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">9</span>
+</button>
+<!-- Row 4 (Utility Buttons) -->
+<button class="flex aspect-square items-center justify-center rounded-full text-slate-500 dark:text-slate-400 active:text-primary transition-colors">
+<span class="material-symbols-outlined text-3xl font-light">backspace</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full active:bg-slate-200 dark:active:bg-slate-800 transition-colors">
+<span class="text-3xl font-semibold">0</span>
+</button>
+<button class="flex aspect-square items-center justify-center rounded-full text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-4xl font-light">face</span>
+</button>
+</div>
+<!-- Footer Links -->
+<div class="mt-12 text-center">
+<button class="text-primary font-semibold text-sm tracking-wide uppercase active:opacity-70 transition-opacity">
+                    Forgot PIN?
+                </button>
+</div>
+</div>
+<!-- Decorative Background Element (Subtle Gradient) -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-primary/5 to-transparent -z-10 blur-3xl pointer-events-none"></div>
+</div>
+</body></html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Market Intel Macro Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3B82F6", // Blue-500 from the refresh button
+                        "background-light": "#F3F4F6", // Gray-100
+                        "background-dark": "#0B1120", // Slate-950ish
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#151e32", // Slightly lighter than bg-dark
+                        "accent-indigo": "#4F46E5",
+                        "accent-amber": "#F59E0B",
+                        "accent-green": "#10B981",
+                        "accent-red": "#EF4444",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }@keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-100 font-display transition-colors duration-200 antialiased pb-24">
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex justify-between items-center shadow-sm">
+<div class="flex items-center gap-3">
+<button class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+<span class="material-icons-outlined text-gray-600 dark:text-gray-300">menu</span>
+</button>
+<div>
+<h1 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">Market Intel</h1>
+<p class="text-xs text-gray-500 dark:text-gray-400">Updated: 12:03:04 AM</p>
+</div>
+</div>
+<button class="bg-primary hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors shadow-lg shadow-blue-500/20">
+<span class="material-icons-outlined text-sm">refresh</span>
+            Refresh
+        </button>
+</header>
+<div class="bg-surface-light dark:bg-surface-dark border-b border-gray-200 dark:border-gray-800 overflow-hidden py-2 whitespace-nowrap relative">
+<div class="inline-flex animate-marquee gap-6 items-center">
+<div class="flex items-center gap-6 text-xs font-medium">
+<span class="text-gray-500 dark:text-gray-400">S&amp;P 500 <span class="text-gray-900 dark:text-white ml-1">5,121.04</span> <span class="text-accent-green ml-1">+1.20%</span></span>
+<span class="text-gray-500 dark:text-gray-400">NASDAQ <span class="text-gray-900 dark:text-white ml-1">16,248.56</span> <span class="text-accent-green ml-1">+1.80%</span></span>
+<span class="text-gray-500 dark:text-gray-400">FTSE 100 <span class="text-gray-900 dark:text-white ml-1">7,711.65</span> <span class="text-accent-red ml-1">-0.40%</span></span>
+<span class="text-gray-500 dark:text-gray-400">NIKKEI 225 <span class="text-gray-900 dark:text-white ml-1">39,496.24</span> <span class="text-accent-green ml-1">+2.10%</span></span>
+<span class="text-gray-500 dark:text-gray-400">GIFT NIFTY <span class="text-gray-900 dark:text-white ml-1">22,445.29</span> <span class="text-accent-green ml-1">+0.50%</span></span>
+<span class="text-gray-500 dark:text-gray-400">BITCOIN <span class="text-gray-900 dark:text-white ml-1">$64,195.74</span> <span class="text-accent-red ml-1">-1.20%</span></span>
+</div>
+<div class="flex items-center gap-6 text-xs font-medium">
+<span class="text-gray-500 dark:text-gray-400">S&amp;P 500 <span class="text-gray-900 dark:text-white ml-1">5,121.04</span> <span class="text-accent-green ml-1">+1.20%</span></span>
+<span class="text-gray-500 dark:text-gray-400">NASDAQ <span class="text-gray-900 dark:text-white ml-1">16,248.56</span> <span class="text-accent-green ml-1">+1.80%</span></span>
+<span class="text-gray-500 dark:text-gray-400">FTSE 100 <span class="text-gray-900 dark:text-white ml-1">7,711.65</span> <span class="text-accent-red ml-1">-0.40%</span></span>
+<span class="text-gray-500 dark:text-gray-400">NIKKEI 225 <span class="text-gray-900 dark:text-white ml-1">39,496.24</span> <span class="text-accent-green ml-1">+2.10%</span></span>
+<span class="text-gray-500 dark:text-gray-400">GIFT NIFTY <span class="text-gray-900 dark:text-white ml-1">22,445.29</span> <span class="text-accent-green ml-1">+0.50%</span></span>
+<span class="text-gray-500 dark:text-gray-400">BITCOIN <span class="text-gray-900 dark:text-white ml-1">$64,195.74</span> <span class="text-accent-red ml-1">-1.20%</span></span>
+</div>
+</div>
+</div>
+<main class="p-4 space-y-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-icons-outlined text-primary text-xl">language</span>
+<h2 class="text-xl font-bold text-gray-900 dark:text-white">Macro Pulse</h2>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400">Global economic indicators and their impact on your portfolio.</p>
+</div>
+<div class="flex overflow-x-auto gap-3 pb-2 no-scrollbar -mx-4 px-4 snap-x">
+<div class="snap-start shrink-0 w-36 bg-surface-light dark:bg-surface-dark p-3 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-icons-outlined text-4xl">show_chart</span>
+</div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">Fear Index</span>
+<span class="text-[10px] text-accent-red flex items-center bg-red-100 dark:bg-red-900/30 px-1 rounded">-2.40%</span>
+</div>
+<div class="text-lg font-bold text-gray-900 dark:text-white relative z-10">13.50</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400 relative z-10">India VIX</div>
+</div>
+<div class="snap-start shrink-0 w-36 bg-surface-light dark:bg-surface-dark p-3 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-icons-outlined text-4xl">attach_money</span>
+</div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">Currency</span>
+<span class="text-[10px] text-accent-green flex items-center bg-green-100 dark:bg-green-900/30 px-1 rounded">+0.12%</span>
+</div>
+<div class="text-lg font-bold text-gray-900 dark:text-white relative z-10">₹84.12</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400 relative z-10">USD/INR</div>
+</div>
+<div class="snap-start shrink-0 w-36 bg-surface-light dark:bg-surface-dark p-3 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-icons-outlined text-4xl">water_drop</span>
+</div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">Inflation</span>
+<span class="text-[10px] text-accent-red flex items-center bg-red-100 dark:bg-red-900/30 px-1 rounded">-0.50%</span>
+</div>
+<div class="text-lg font-bold text-gray-900 dark:text-white relative z-10">$78.45</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400 relative z-10">Brent Crude</div>
+</div>
+<div class="snap-start shrink-0 w-36 bg-surface-light dark:bg-surface-dark p-3 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-icons-outlined text-4xl">bolt</span>
+</div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">Liquidity</span>
+<span class="text-[10px] text-accent-green flex items-center bg-green-100 dark:bg-green-900/30 px-1 rounded">+0.05%</span>
+</div>
+<div class="text-lg font-bold text-gray-900 dark:text-white relative z-10">4.42%</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400 relative z-10">US 10Y Yield</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="material-icons-outlined text-accent-amber text-lg">ssid_chart</span>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">India VIX Trend</h3>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase text-gray-500 dark:text-gray-400 font-bold tracking-wide">Current Level</p>
+<p class="text-xl font-bold text-gray-900 dark:text-white">13.50</p>
+</div>
+</div>
+<div class="relative h-40 w-full overflow-hidden">
+<svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 300 100">
+<defs>
+<linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#F59E0B" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#F59E0B" stop-opacity="0"></stop>
+</linearGradient>
+</defs>
+<path d="M0,70 Q30,50 50,60 T100,40 T150,55 T200,45 T250,50 T300,75 L300,100 L0,100 Z" fill="url(#chartGradient)"></path>
+<path d="M0,70 Q30,50 50,60 T100,40 T150,55 T200,45 T250,50 T300,75" fill="none" stroke="#F59E0B" stroke-width="2"></path>
+</svg>
+<div class="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[8px] text-gray-400 py-1">
+<span>14.8</span>
+<span>14.4</span>
+<span>14.0</span>
+<span>13.6</span>
+</div>
+</div>
+<p class="text-[10px] text-gray-500 dark:text-gray-400 mt-2">Market volatility expectation. &lt; 15 is calm, &gt; 20 is fearful.</p>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-icons-outlined text-primary text-lg">calendar_today</span>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">Economic Calendar</h3>
+</div>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="bg-gray-200 dark:bg-gray-800 rounded px-2 py-1 text-center h-min min-w-[3rem]">
+<div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">DEC</div>
+<div class="text-sm font-bold text-gray-900 dark:text-white">18</div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Fed Interest Rate Decision</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">HIGH</span>
+<span class="text-[10px] text-gray-500 dark:text-gray-400">Fcst: 4.75%</span>
+</div>
+</div>
+<span class="material-icons-outlined text-gray-400 text-sm">schedule</span>
+</div>
+<div class="flex gap-3">
+<div class="bg-gray-200 dark:bg-gray-800 rounded px-2 py-1 text-center h-min min-w-[3rem]">
+<div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">DEC</div>
+<div class="text-sm font-bold text-gray-900 dark:text-white">12</div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">India CPI Inflation</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">HIGH</span>
+<span class="text-[10px] text-gray-500 dark:text-gray-400">Fcst: 4.80%</span>
+</div>
+</div>
+<span class="material-icons-outlined text-gray-400 text-sm">schedule</span>
+</div>
+<div class="flex gap-3">
+<div class="bg-gray-200 dark:bg-gray-800 rounded px-2 py-1 text-center h-min min-w-[3rem]">
+<div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">DEC</div>
+<div class="text-sm font-bold text-gray-900 dark:text-white">06</div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-gray-900 dark:text-white">US Non-Farm Payrolls</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded">MEDIUM</span>
+<span class="text-[10px] text-gray-500 dark:text-gray-400">Fcst: 180K</span>
+</div>
+</div>
+<span class="material-icons-outlined text-gray-400 text-sm">schedule</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm col-span-2 sm:col-span-1">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-icons-outlined text-accent-green text-lg">bar_chart</span>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">Sector Heatmap</h3>
+</div>
+<div class="space-y-2 text-[10px]">
+<div class="flex items-center gap-2">
+<span class="w-10 text-right text-gray-500 dark:text-gray-400">IT</span>
+<div class="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-accent-green w-[80%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-10 text-right text-gray-500 dark:text-gray-400">Pharma</span>
+<div class="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-accent-green w-[60%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-10 text-right text-gray-500 dark:text-gray-400">Auto</span>
+<div class="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-accent-green w-[20%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-10 text-right text-gray-500 dark:text-gray-400">Banks</span>
+<div class="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden relative">
+<div class="absolute left-0 h-full bg-accent-red w-[40%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-10 text-right text-gray-500 dark:text-gray-400">Metals</span>
+<div class="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden relative">
+<div class="absolute left-0 h-full bg-accent-red w-[55%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm col-span-2 sm:col-span-1 flex flex-col items-center justify-center">
+<div class="flex items-center gap-2 mb-2 w-full">
+<span class="material-icons-outlined text-accent-orange text-lg text-orange-500">speed</span>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">Fear &amp; Greed</h3>
+</div>
+<div class="relative w-32 h-16 mt-2">
+<div class="w-32 h-16 rounded-t-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 opacity-80"></div>
+<div class="absolute bottom-0 left-1/2 w-1 h-14 bg-gray-800 dark:bg-white origin-bottom transform -translate-x-1/2 -rotate-45 rounded-full border border-white dark:border-gray-900 z-10"></div>
+<div class="absolute bottom-0 left-1/2 w-4 h-4 bg-gray-800 dark:bg-white rounded-full transform -translate-x-1/2 translate-y-1/2 z-20 border-2 border-gray-200 dark:border-gray-800"></div>
+</div>
+<div class="text-center mt-4">
+<div class="text-2xl font-bold text-accent-amber">42</div>
+<div class="text-xs text-accent-amber font-semibold uppercase">Fear</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-icons-outlined text-primary text-lg">trending_up</span>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">FII/DII Activity (₹ Cr)</h3>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-right">
+<thead>
+<tr class="text-[10px] text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+<th class="text-left font-normal pb-2">Date</th>
+<th class="font-normal pb-2">FII</th>
+<th class="font-normal pb-2">DII</th>
+</tr>
+</thead>
+<tbody class="text-xs font-medium">
+<tr class="border-b border-gray-100 dark:border-gray-800/50">
+<td class="text-left py-2 text-gray-600 dark:text-gray-300">Dec 05</td>
+<td class="py-2 text-red-500">-1250</td>
+<td class="py-2 text-green-500">+1850</td>
+</tr>
+<tr class="border-b border-gray-100 dark:border-gray-800/50">
+<td class="text-left py-2 text-gray-600 dark:text-gray-300">Dec 04</td>
+<td class="py-2 text-red-500">-890</td>
+<td class="py-2 text-green-500">+1420</td>
+</tr>
+<tr class="border-b border-gray-100 dark:border-gray-800/50">
+<td class="text-left py-2 text-gray-600 dark:text-gray-300">Dec 03</td>
+<td class="py-2 text-green-500">+520</td>
+<td class="py-2 text-green-500">+780</td>
+</tr>
+<tr>
+<td class="text-left py-2 text-gray-500 dark:text-gray-400 text-[10px]">5-Day Net</td>
+<td class="py-2 text-red-500 font-bold">-5,300 Cr</td>
+<td class="py-2 text-green-500 font-bold">+8,100 Cr</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm mb-4">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-icons-outlined text-purple-500 text-lg">event</span>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">Earnings Calendar</h3>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800/50 last:border-0 last:pb-0">
+<div>
+<div class="text-sm font-semibold text-gray-900 dark:text-white">TCS</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400">IT</div>
+</div>
+<div class="text-right">
+<div class="text-sm font-semibold text-primary dark:text-blue-400">₹62.5</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400">Dec 09</div>
+</div>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800/50 last:border-0 last:pb-0">
+<div>
+<div class="text-sm font-semibold text-gray-900 dark:text-white">Infosys</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400">IT</div>
+</div>
+<div class="text-right">
+<div class="text-sm font-semibold text-primary dark:text-blue-400">₹18.2</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400">Dec 11</div>
+</div>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800/50 last:border-0 last:pb-0">
+<div>
+<div class="text-sm font-semibold text-gray-900 dark:text-white">HDFC Bank</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400">Banking</div>
+</div>
+<div class="text-right">
+<div class="text-sm font-semibold text-primary dark:text-blue-400">₹21.5</div>
+<div class="text-[10px] text-gray-500 dark:text-gray-400">Dec 15</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe pt-2">
+<div class="flex justify-around items-center px-2 pb-2">
+<a class="flex flex-col items-center gap-1 p-2 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined text-2xl">grid_view</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary dark:text-primary transition-colors" href="#">
+<span class="material-icons-outlined text-2xl">language</span>
+<span class="text-[10px] font-medium">Market Intel</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<div class="bg-primary rounded-full p-2 -mt-6 border-4 border-background-light dark:border-background-dark shadow-lg">
+<span class="material-icons-outlined text-white text-2xl">mic</span>
+</div>
+<span class="text-[10px] font-medium mt-1">Assistant</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined text-2xl">rocket_launch</span>
+<span class="text-[10px] font-medium">Growth</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined text-2xl">account_circle</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple dark mode toggle logic for testing (optional, as system pref is usually used)
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+</body></html>

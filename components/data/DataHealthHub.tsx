@@ -3,6 +3,7 @@ import { Investment } from '../../types';
 import { AlertCircle, CheckCircle2, RefreshCw, AlertTriangle, Trash2, Clock, Database, FileDigit } from 'lucide-react';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { formatCurrency } from '../../utils/helpers';
+import * as BackupService from '../../services/BackupService';
 
 interface DataHealthHubProps {
     onClose?: () => void;
@@ -126,17 +127,16 @@ const DataHealthHub: React.FC<DataHealthHubProps> = ({ onClose }) => {
                     </div>
                 </div>
 
-                {/* Export Actions */}
                 <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button
-                        onClick={() => import('../../services/BackupService').then(m => m.handleDownloadBackup())}
+                        onClick={() => BackupService.handleDownloadBackup()}
                         className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors"
                     >
                         <Database size={14} />
                         Backup JSON
                     </button>
                     <button
-                        onClick={() => import('../../services/BackupService').then(m => m.handleExportHoldings())}
+                        onClick={() => BackupService.handleExportHoldings()}
                         className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors"
                     >
                         <FileDigit size={14} />

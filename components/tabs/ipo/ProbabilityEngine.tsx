@@ -45,7 +45,7 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
                     </p>
 
                     <div className="flex gap-4">
-                        <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 flex-1">
+                        <div className="bg-slate-100 dark:bg-slate-950/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex-1">
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Retail Subscription</label>
                             <div className="flex items-center gap-3">
                                 <input
@@ -53,13 +53,13 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
                                     value={subscriptionX}
                                     onChange={(e) => setSubscriptionX(parseFloat(e.target.value) || '')}
                                     placeholder="e.g. 50"
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xl font-mono font-bold outline-none focus:border-indigo-500 transition-colors"
+                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white text-xl font-mono font-bold outline-none focus:border-indigo-500 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
                                 />
                                 <span className="text-slate-500 font-bold shrink-0">X</span>
                             </div>
                         </div>
 
-                        <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 flex-1">
+                        <div className="bg-slate-100 dark:bg-slate-950/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex-1">
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Applications</label>
                             <div className="flex items-center gap-3">
                                 <input
@@ -67,7 +67,7 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
                                     min="1"
                                     value={numApplications}
                                     onChange={(e) => setNumApplications(Math.max(1, parseInt(e.target.value) || 1))}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xl font-mono font-bold outline-none focus:border-indigo-500 transition-colors"
+                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white text-xl font-mono font-bold outline-none focus:border-indigo-500 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
                                 />
                                 <span className="text-slate-500 font-bold shrink-0">Nos</span>
                             </div>
@@ -94,9 +94,9 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
                         <p className="text-[9px] text-slate-400 mt-2">Based on historical allotment data.</p>
                     </div>
 
-                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col justify-between group hover:bg-slate-800 transition-colors">
-                        <p className="text-xs text-slate-400 font-bold uppercase mb-1">Theoretical ({numApplications} Acc)</p>
-                        <div className="text-2xl font-black text-slate-200">{calculateProbability(numApplications)}%</div>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">Theoretical ({numApplications} Acc)</p>
+                        <div className="text-2xl font-black text-slate-800 dark:text-slate-200">{calculateProbability(numApplications)}%</div>
                         <div className="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
                             <div className="bg-slate-400 h-full" style={{ width: `${calculateProbability(numApplications)}%` }}></div>
                         </div>

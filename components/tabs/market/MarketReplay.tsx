@@ -178,21 +178,21 @@ export const MarketReplay: React.FC<MarketReplaySimulatorProps> = ({ isOpen, onC
                         <Activity className="text-cyan-400" size={24} />
                     </div>
                     <div>
-                        <h2 className="text-white font-bold text-lg">Market Replay Simulator</h2>
+                        <h2 className="text-slate-900 dark:text-white font-bold text-lg">Market Replay Simulator</h2>
                         <p className="text-slate-400 text-xs">NIFTY 50 • 1 Lot (50 Qty)</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-6">
                     <div className="text-right">
                         <p className="text-xs text-slate-400 uppercase">Balance</p>
-                        <p className="text-xl font-mono font-bold text-white">₹{balance.toFixed(0)}</p>
+                        <p className="text-xl font-mono font-bold text-slate-900 dark:text-white">₹{balance.toFixed(0)}</p>
                     </div>
                     <div className={`text-right ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                         <p className="text-xs opacity-70 uppercase">Unrealized P&L</p>
                         <p className="text-xl font-mono font-bold">{pnl >= 0 ? '+' : ''}₹{pnl.toFixed(0)}</p>
                     </div>
                     {onClose && (
-                        <button onClick={finishSession} className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+                        <button onClick={finishSession} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 dark:border-transparent">
                             End Session
                         </button>
                     )}
@@ -200,7 +200,7 @@ export const MarketReplay: React.FC<MarketReplaySimulatorProps> = ({ isOpen, onC
             </div>
 
             {/* Chart Area */}
-            <div className="flex-1 bg-slate-950 relative p-4">
+            <div className="flex-1 bg-white dark:bg-slate-950 relative p-4">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={visibleData}>
                         <defs>
@@ -231,11 +231,11 @@ export const MarketReplay: React.FC<MarketReplaySimulatorProps> = ({ isOpen, onC
             </div>
 
             {/* Controls */}
-            <div className="bg-slate-800 p-6 border-t border-slate-700 flex justify-between items-center">
+            <div className="bg-slate-50 dark:bg-slate-800 p-6 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsPlaying(!isPlaying)}
-                        className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+                        className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white transition-colors border border-slate-300 dark:border-transparent"
                     >
                         {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-1" />}
                     </button>
@@ -247,7 +247,7 @@ export const MarketReplay: React.FC<MarketReplaySimulatorProps> = ({ isOpen, onC
                             setBalance(100000);
                             setPosition(null);
                         }}
-                        className="p-3 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                        className="p-3 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
                     >
                         <RotateCcw size={20} />
                     </button>

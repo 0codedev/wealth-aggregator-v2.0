@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Moonshot Lab AI Boardroom</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366f1", // Indigo-500 equivalent for the primary accent
+                        "background-light": "#f8fafc", // Slate-50
+                        "background-dark": "#020617", // Slate-950
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#0f172a", // Slate-900
+                        "border-light": "#e2e8f0", // Slate-200
+                        "border-dark": "#1e293b", // Slate-800
+                        "text-light": "#0f172a",
+                        "text-dark": "#f8fafc",
+                        "muted-light": "#64748b",
+                        "muted-dark": "#94a3b8",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                        'xl': "1rem",
+                        '2xl': "1.5rem",
+                    },
+                    boxShadow: {
+                        'glow': '0 0 20px -5px rgba(99, 102, 241, 0.3)',
+                    }
+                },
+            },
+        };
+    </script>
+<style>.scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-sans h-screen flex flex-col antialiased selection:bg-primary selection:text-white transition-colors duration-200">
+<div class="h-12 w-full bg-background-light dark:bg-background-dark shrink-0"></div>
+<header class="px-6 py-4 flex flex-col justify-between shrink-0 bg-background-light dark:bg-background-dark z-10 sticky top-0">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
+<span class="material-icons-round align-middle mr-1 text-primary text-2xl">science</span>
+                    Moonshot Lab
+                </h1>
+<p class="text-xs font-medium text-muted-light dark:text-muted-dark mt-0.5 ml-1">The Council is in session</p>
+</div>
+<div class="flex space-x-3">
+<button class="text-muted-light dark:text-muted-dark hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">notifications_none</span>
+</button>
+<button class="text-muted-light dark:text-muted-dark hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">history</span>
+</button>
+</div>
+</div>
+<nav class="flex space-x-3 overflow-x-auto scrollbar-hide pb-2 -mx-6 px-6">
+<button class="whitespace-nowrap px-4 py-2 bg-primary/10 dark:bg-primary/20 text-primary font-semibold text-sm rounded-full border border-primary/20 shadow-glow">
+                AI Boardroom
+            </button>
+<button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-surface-dark text-muted-light dark:text-muted-dark font-medium text-sm rounded-full border border-border-light dark:border-border-dark hover:border-primary/50 transition-colors">
+                Stress Test Lab
+            </button>
+<button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-surface-dark text-muted-light dark:text-muted-dark font-medium text-sm rounded-full border border-border-light dark:border-border-dark hover:border-primary/50 transition-colors">
+                Regret Engine
+            </button>
+<button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-surface-dark text-muted-light dark:text-muted-dark font-medium text-sm rounded-full border border-border-light dark:border-border-dark hover:border-primary/50 transition-colors">
+                Anti-Impulse
+            </button>
+</nav>
+</header>
+<main class="flex-1 overflow-y-auto px-4 py-2 space-y-6 relative">
+<div class="flex justify-center my-4">
+<span class="text-[10px] font-bold uppercase tracking-wider text-muted-light dark:text-gray-600 bg-gray-100 dark:bg-surface-dark px-3 py-1 rounded-full">Today, 10:42 AM</span>
+</div>
+<div class="flex items-start space-x-3 animate-fade-in-up" style="animation-delay: 0.1s;">
+<div class="shrink-0 relative">
+<div class="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center border border-orange-200 dark:border-orange-800">
+<span class="text-xl">🤵</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-background-light dark:bg-background-dark rounded-full flex items-center justify-center">
+<span class="block w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+</div>
+</div>
+<div class="flex-1 max-w-[85%]">
+<div class="flex items-baseline space-x-2 mb-1">
+<span class="text-sm font-bold text-gray-800 dark:text-gray-200">The Oracle</span>
+<span class="text-[10px] text-muted-light dark:text-muted-dark uppercase tracking-wide">Macro Strategy</span>
+</div>
+<div class="p-3.5 bg-white dark:bg-surface-dark rounded-2xl rounded-tl-none border border-border-light dark:border-border-dark shadow-sm text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                    Welcome to the boardroom. Let's discuss the long-term value of your holdings.
+                </div>
+</div>
+</div>
+<div class="flex items-start space-x-3 animate-fade-in-up" style="animation-delay: 0.2s;">
+<div class="shrink-0 relative">
+<div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border border-blue-200 dark:border-blue-800">
+<span class="material-icons-round text-blue-500 dark:text-blue-400 text-lg">language</span>
+</div>
+</div>
+<div class="flex-1 max-w-[85%]">
+<div class="flex items-baseline space-x-2 mb-1">
+<span class="text-sm font-bold text-gray-800 dark:text-gray-200">The Ray</span>
+<span class="text-[10px] text-muted-light dark:text-muted-dark uppercase tracking-wide">Risk Manager</span>
+</div>
+<div class="p-3.5 bg-white dark:bg-surface-dark rounded-2xl rounded-tl-none border border-border-light dark:border-border-dark shadow-sm text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                    We need to look at the risk exposure first. How is your diversification?
+                </div>
+</div>
+</div>
+<div class="flex items-start space-x-3 animate-fade-in-up" style="animation-delay: 0.3s;">
+<div class="shrink-0 relative">
+<div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center border border-purple-200 dark:border-purple-800">
+<span class="text-lg">🚀</span>
+</div>
+</div>
+<div class="flex-1 max-w-[85%]">
+<div class="flex items-baseline space-x-2 mb-1">
+<span class="text-sm font-bold text-gray-800 dark:text-gray-200">The Futurist</span>
+<span class="text-[10px] text-muted-light dark:text-muted-dark uppercase tracking-wide">Growth Engine</span>
+</div>
+<div class="p-3.5 bg-white dark:bg-surface-dark rounded-2xl rounded-tl-none border border-border-light dark:border-border-dark shadow-sm text-sm leading-relaxed text-gray-700 dark:text-gray-300 shadow-glow border-indigo-500/20">
+                    Boring! Let's talk about where the 100x growth is coming from!
+                </div>
+</div>
+</div>
+<div class="h-24"></div>
+</main>
+<footer class="p-4 bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark shrink-0 fixed bottom-0 w-full z-20 pb-8">
+<div class="relative flex items-end gap-2 max-w-lg mx-auto">
+<div class="flex-1 relative">
+<input class="w-full bg-white dark:bg-surface-dark text-text-light dark:text-text-dark placeholder-muted-light dark:placeholder-muted-dark text-sm rounded-2xl border-0 ring-1 ring-border-light dark:ring-border-dark focus:ring-2 focus:ring-primary pl-4 pr-10 py-3.5 shadow-sm transition-all" placeholder="Ask the council for advice..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-light dark:text-muted-dark hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">add_circle_outline</span>
+</button>
+</div>
+<div class="flex flex-col gap-2 shrink-0">
+<button class="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors active:scale-95 transform">
+<span class="material-icons-round text-lg -mr-0.5 mt-0.5">send</span>
+</button>
+</div>
+<button class="absolute -top-14 right-0 w-10 h-10 bg-surface-dark/80 backdrop-blur-md border border-border-dark text-primary rounded-full flex items-center justify-center shadow-md hover:bg-surface-dark transition-colors active:scale-95 transform">
+<span class="material-icons-round text-lg">mic</span>
+</button>
+</div>
+<div class="text-center mt-3">
+<p class="text-[10px] text-muted-light dark:text-slate-600 flex items-center justify-center gap-1">
+<span class="material-icons-round text-[12px]">warning</span>
+                AI generated content. Not financial advice.
+            </p>
+</div>
+</footer>
+<style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+            opacity: 0;
+        }
+    </style>
+<div class="fixed bottom-1 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-black/20 dark:bg-white/20 rounded-full z-50"></div>
+
+</body></html>

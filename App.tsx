@@ -3,7 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { pageVariants } from './components/ui/animations';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/auth/LoginPage';
+import { MobilePinLogin } from './components/mobile/MobilePinLogin';
 import { FamilyProvider, useFamily } from './contexts/FamilyContext';
+// DISABLED: Supabase auth (halted per user request)
+// import { SupabaseAuthProvider, useSupabaseAuth } from './contexts/SupabaseAuthContext';
+import { FirebaseAuthProvider, useFirebaseAuth } from './contexts/FirebaseAuthContext';
 import ProfileMenu from './components/layout/ProfileMenu';
 import {
     LayoutDashboard, Wallet, Globe, Bot,
@@ -44,9 +48,13 @@ const QuantDashboard = lazy(() => import('./components/analytics/QuantDashboard'
 const FortressDashboard = lazy(() => import('./components/fortress/FortressDashboard').then(m => ({ default: m.FortressDashboard })));
 const MathLabHub = lazy(() => import('./components/calculators/MathLabHub').then(m => ({ default: m.MathLabHub })));
 
+// DISABLED: Supabase login (halted per user request)
+// import SupabaseLoginPage from './components/auth/SupabaseLoginPage';
+import FirebaseLoginPage from './components/auth/FirebaseLoginPage';
+import SettingsDesktopView from './components/settings/SettingsDesktopView';
+
 // Modals
 import AddInvestmentModal from './components/AddInvestmentModal';
-import LogicConfigModal from './components/LogicConfigModal';
 
 // Shared Components
 import { PrivacyValue } from './components/shared/PrivacyComponents';
@@ -107,7 +115,8 @@ const SUB_TABS: Record<string, { id: string, label: string, icon: any }[]> = {
     ],
     fortress: [
         { id: 'dashboard', label: 'Command Center', icon: Shield },
-    ]
+    ],
+    settings: []
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -120,7 +129,8 @@ const CATEGORY_LABELS: Record<string, string> = {
     planning: 'Life Planner',
     innovation: 'Moonshot Lab',
     analytics: 'Analytics Center',
-    fortress: 'The Fortress'
+    fortress: 'The Fortress',
+    settings: 'Settings'
 };
 
 import { Compass, ShieldCheck, Activity, Clipboard, Zap, BookOpen, Crown, AlertTriangle, Calculator } from 'lucide-react';
@@ -129,8 +139,12 @@ import { Compass, ShieldCheck, Activity, Clipboard, Zap, BookOpen, Crown, AlertT
 // This prevents hooks from being called after an early return, which violates React Rules of Hooks.
 const AppContent: React.FC = () => {
     const { isAuthenticated, isLocked } = useAuth();
+    const isMobile = useIsMobile();
 
     if (!isAuthenticated || isLocked) {
+        if (isMobile) {
+            return <MobilePinLogin />;
+        }
         return <LoginPage />;
     }
 
@@ -153,7 +167,6 @@ const AuthenticatedApp: React.FC = () => {
 
     // --- Modals ---
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -241,7 +254,6 @@ const AuthenticatedApp: React.FC = () => {
 
     useHotkeys('escape', () => {
         if (isAddModalOpen) setIsAddModalOpen(false);
-        if (isSettingsOpen) setIsSettingsOpen(false);
         if (isSearchFocused) setIsSearchFocused(false);
     });
 
@@ -342,6 +354,7 @@ const AuthenticatedApp: React.FC = () => {
             case 'mathlab': return <MathLabHub />;
             case 'quant': return <QuantDashboard />;
             case 'fortress': return <FortressDashboard />;
+            case 'settings': return <SettingsDesktopView />;
             // Default Fallback
             default: return <DashboardTab {...dashboardProps} />;
         }
@@ -370,7 +383,7 @@ const AuthenticatedApp: React.FC = () => {
                 setActiveCategory={setActiveCategory}
                 isMobileMenuOpen={isMobileMenuOpen}
                 setIsMobileMenuOpen={setIsMobileMenuOpen}
-                onOpenSettings={() => setIsSettingsOpen(true)}
+                onOpenSettings={() => { setActiveCategory('settings'); setDashboardView('MAIN'); }}
                 totalNetWorth={formatCurrency(stats?.totalCurrent || 0)}
                 isPrivacyMode={isPrivacyMode}
                 onTogglePrivacy={() => setIsPrivacyMode(!isPrivacyMode)}
@@ -469,7 +482,6 @@ const AuthenticatedApp: React.FC = () => {
             {isAddModalOpen && (
                 <AddInvestmentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingInvestment(null); }} onSave={async (data, id) => { if (id) { await updateInvestment(id, data); } else { await addInvestment(data as Investment); } setIsAddModalOpen(false); setEditingInvestment(null); }} editingInvestment={editingInvestment} />
             )}
-            <LogicConfigModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
             <CommandPalette />
             <JarvisOrb onNavigate={setActiveCategory} onSwitchProfile={(id) => setActiveEntity(id as any)} />
             <OfflineIndicator />
@@ -477,13 +489,36 @@ const AuthenticatedApp: React.FC = () => {
     );
 };
 
+const RootAuthGate: React.FC = () => {
+    const { user, loading } = useFirebaseAuth();
+
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-950">
+                <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="mt-4 text-slate-400">Connecting to Cloud Secure...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <FirebaseLoginPage />;
+    }
+
+    return <AppContent />;
+};
+
 const App: React.FC = () => {
     return (
-        <AuthProvider>
-            <FamilyProvider>
-                <AppContent />
-            </FamilyProvider>
-        </AuthProvider>
+        <FirebaseAuthProvider>
+            <AuthProvider>
+                <FamilyProvider>
+                    <RootAuthGate />
+                </FamilyProvider>
+            </AuthProvider>
+        </FirebaseAuthProvider>
     );
 };
 

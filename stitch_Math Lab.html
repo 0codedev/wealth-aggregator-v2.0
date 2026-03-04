@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Math Lab Financial Calculators</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366f1", // Indigo-500 from screenshot highlight
+                        "background-light": "#f1f5f9", // Slate-100
+                        "background-dark": "#0f172a", // Slate-900/950
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b", // Slate-800
+                        "accent-green": "#10b981", // Emerald-500
+                        "accent-blue": "#3b82f6", // Blue-500
+                        "card-dark": "#162032", // Slightly lighter than background-dark
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                        'xl': "1rem",
+                        '2xl': "1.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            border-radius: 2px;
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }.no-scrollbar {
+            -ms-overflow-style: none;scrollbar-width: none;}
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-4">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 p-2 rounded-lg text-primary">
+<span class="material-icons-round text-2xl">calculate</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight">Math Lab</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Advanced financial calculators</p>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors relative">
+<span class="material-icons-round text-slate-600 dark:text-slate-300">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+</button>
+</div>
+<nav class="flex space-x-3 overflow-x-auto no-scrollbar pb-1">
+<button class="flex-shrink-0 px-4 py-2 bg-primary text-white text-sm font-medium rounded-full shadow-lg shadow-primary/30 whitespace-nowrap">
+<span class="material-icons-round text-sm mr-1 align-text-bottom">trending_up</span>
+                Investment &amp; Wealth
+            </button>
+<button class="flex-shrink-0 px-4 py-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-full whitespace-nowrap">
+<span class="material-icons-round text-sm mr-1 align-text-bottom">bolt</span>
+                Active Trading
+            </button>
+<button class="flex-shrink-0 px-4 py-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-full whitespace-nowrap">
+<span class="material-icons-round text-sm mr-1 align-text-bottom">science</span>
+                Simulations
+            </button>
+<button class="flex-shrink-0 px-4 py-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-full whitespace-nowrap">
+<span class="material-icons-round text-sm mr-1 align-text-bottom">account_balance</span>
+                Debt &amp; Loans
+            </button>
+</nav>
+</header>
+<main class="p-4 space-y-6 max-w-lg mx-auto pb-24">
+<section class="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700/50">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-lg font-bold">Investment Calculator</h2>
+<div class="bg-slate-100 dark:bg-slate-900 p-1 rounded-lg flex text-xs font-medium">
+<button class="px-3 py-1 bg-primary text-white rounded shadow-sm">SIP</button>
+<button class="px-3 py-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Lumpsum</button>
+</div>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Monthly Investment</span>
+<span class="font-bold text-primary">₹10,000</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary [&amp;::-webkit-slider-runnable-track]:bg-primary/20 [&amp;::-webkit-slider-thumb]:bg-primary" max="100000" min="500" type="range" value="10000"/>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Expected Return Rate (p.a)</span>
+<span class="font-bold text-accent-green">12%</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-accent-green [&amp;::-webkit-slider-runnable-track]:bg-accent-green/20 [&amp;::-webkit-slider-thumb]:bg-accent-green" max="30" min="1" type="range" value="12"/>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Time Period (Years)</span>
+<span class="font-bold text-orange-400">10 Yr</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-400 [&amp;::-webkit-slider-runnable-track]:bg-orange-400/20 [&amp;::-webkit-slider-thumb]:bg-orange-400" max="50" min="1" type="range" value="10"/>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Annual Step-Up (Optional)</span>
+<span class="font-bold text-rose-500">0%</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500 [&amp;::-webkit-slider-runnable-track]:bg-rose-500/20 [&amp;::-webkit-slider-thumb]:bg-rose-500" max="20" min="0" type="range" value="0"/>
+</div>
+</div>
+<div class="mt-8 bg-slate-50 dark:bg-card-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Invested Amount</p>
+<p class="font-bold text-slate-800 dark:text-slate-200">₹12,00,000</p>
+</div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Est. Returns</p>
+<p class="font-bold text-accent-green">+₹11,23,391</p>
+</div>
+</div>
+<div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Value</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">₹23,23,391</p>
+</div>
+</div>
+<div class="mt-6 h-48 w-full relative">
+<canvas id="investmentChart"></canvas>
+</div>
+</section>
+<section class="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700/50">
+<h2 class="text-lg font-bold mb-6">F.I.R.E. Engine</h2>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<label class="block text-xs text-slate-500 dark:text-slate-400 mb-2">Current Age</label>
+<input class="w-full bg-slate-50 dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" type="number" value="30"/>
+</div>
+<div>
+<label class="block text-xs text-slate-500 dark:text-slate-400 mb-2">Retirement Age</label>
+<input class="w-full bg-slate-50 dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" type="number" value="50"/>
+</div>
+</div>
+<div class="space-y-5 mb-8">
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Life Expectancy</span>
+<span class="font-bold text-slate-700 dark:text-slate-300">85 Yr</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-slate-400 [&amp;::-webkit-slider-runnable-track]:bg-slate-400/20 [&amp;::-webkit-slider-thumb]:bg-slate-400" max="100" min="60" type="range" value="85"/>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Current Monthly Expenses</span>
+<span class="font-bold text-rose-500">₹50,000</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500 [&amp;::-webkit-slider-runnable-track]:bg-rose-500/20 [&amp;::-webkit-slider-thumb]:bg-rose-500" max="200000" min="10000" type="range" value="50000"/>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="text-slate-500 dark:text-slate-400">Current Saved Corpus</span>
+<span class="font-bold text-primary">₹10,00,000</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary [&amp;::-webkit-slider-runnable-track]:bg-primary/20 [&amp;::-webkit-slider-thumb]:bg-primary" max="10000000" min="0" type="range" value="1000000"/>
+</div>
+</div>
+<div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-card-dark dark:to-black rounded-xl p-5 text-white relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-xs text-slate-400 mb-1">Target FIRE Corpus Needed</p>
+<h3 class="text-2xl font-bold mb-4">₹4,23,91,799</h3>
+<div class="grid grid-cols-2 gap-4 text-xs">
+<div>
+<p class="text-slate-400 mb-1">Monthly Exp. @ Retirement</p>
+<p class="text-rose-400 font-semibold">₹1,60,357/mo</p>
+</div>
+<div>
+<p class="text-slate-400 mb-1">Required monthly SIP</p>
+<p class="text-primary font-semibold">₹33,432/mo</p>
+</div>
+</div>
+</div>
+<div class="absolute right-[-20px] bottom-[-20px] opacity-20 transform rotate-12">
+<div class="w-32 h-32 rounded-full border-8 border-rose-500 border-t-primary border-r-primary box-content"></div>
+</div>
+<div class="flex justify-center mt-4">
+<div class="w-24 h-24 relative">
+<canvas id="fireChart"></canvas>
+<div class="absolute inset-0 flex items-center justify-center text-[10px] text-slate-400">
+                            Split
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<section class="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700/50">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-md font-bold">CAGR &amp; Returns</h2>
+<span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">Find CAGR</span>
+</div>
+<div class="space-y-3">
+<div>
+<label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Initial Investment</label>
+<div class="flex items-center bg-slate-50 dark:bg-card-dark rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">
+<span class="text-slate-400 mr-2">₹</span>
+<input class="bg-transparent w-full text-sm focus:outline-none" type="text" value="10000"/>
+</div>
+</div>
+<div>
+<label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Final Value</label>
+<div class="flex items-center bg-slate-50 dark:bg-card-dark rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">
+<span class="text-slate-400 mr-2">₹</span>
+<input class="bg-transparent w-full text-sm focus:outline-none" type="text" value="50000"/>
+</div>
+</div>
+<div>
+<label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Time Period (Years)</label>
+<div class="flex items-center bg-slate-50 dark:bg-card-dark rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">
+<input class="bg-transparent w-full text-sm focus:outline-none" type="text" value="5"/>
+</div>
+</div>
+</div>
+<div class="mt-4 bg-slate-900 dark:bg-card-dark rounded-lg p-3 relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Compound Annual Growth</p>
+<p class="text-2xl font-bold text-accent-green">37.97%</p>
+<div class="mt-2 text-xs text-slate-400">
+                            Absolute Return <span class="text-accent-green ml-1">400.00%</span>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700/50">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-md font-bold">Simple ROI</h2>
+<span class="material-icons-round text-accent-green text-sm">percent</span>
+</div>
+<div class="space-y-3">
+<div>
+<label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Total Invested Value</label>
+<div class="flex items-center bg-slate-50 dark:bg-card-dark rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">
+<span class="text-slate-400 mr-2">₹</span>
+<input class="bg-transparent w-full text-sm focus:outline-none" type="text" value="100000"/>
+</div>
+</div>
+<div>
+<label class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Expected Return (%)</label>
+<div class="flex items-center bg-slate-50 dark:bg-card-dark rounded-lg px-3 py-2 border border-slate-200 dark:border-slate-700">
+<span class="text-slate-400 mr-2">%</span>
+<input class="bg-transparent w-full text-sm focus:outline-none" type="text" value="15"/>
+</div>
+</div>
+</div>
+<div class="mt-4 bg-slate-900 dark:bg-card-dark rounded-lg p-3 relative">
+<div class="flex justify-between items-end mb-2">
+<div>
+<p class="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Total Profits</p>
+<p class="text-lg font-bold text-accent-green">+₹15,000</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Total Value</p>
+<p class="text-lg font-bold text-white">₹1,15,000</p>
+</div>
+</div>
+<div class="h-16 w-16 mx-auto mt-2 relative">
+<canvas id="roiChart"></canvas>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-icons-round text-accent-green text-xs">trending_up</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<button class="fixed bottom-6 right-6 p-4 bg-primary text-white rounded-full shadow-xl shadow-primary/40 hover:scale-105 transition-transform z-50 flex items-center justify-center">
+<span class="material-icons-round">mic</span>
+</button>
+<script>
+        // Chart Configuration
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+        // Investment Growth Chart
+        const ctxInv = document.getElementById('investmentChart').getContext('2d');
+        const gradientInv = ctxInv.createLinearGradient(0, 0, 0, 200);
+        gradientInv.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // primary color with opacity
+        gradientInv.addColorStop(1, 'rgba(99, 102, 241, 0)');
+        new Chart(ctxInv, {
+            type: 'line',
+            data: {
+                labels: ['1Y', '2Y', '3Y', '4Y', '5Y', '6Y', '7Y', '8Y', '9Y', '10Y'],
+                datasets: [{
+                    label: 'Projected Wealth',
+                    data: [120000, 250000, 400000, 580000, 800000, 1100000, 1450000, 1800000, 2100000, 2323391],
+                    borderColor: '#6366f1',
+                    backgroundColor: gradientInv,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { font: { size: 10 } }
+                    },
+                    y: {
+                        display: false
+                    }
+                }
+            }
+        });
+        // Fire Donut Chart
+        const ctxFire = document.getElementById('fireChart').getContext('2d');
+        new Chart(ctxFire, {
+            type: 'doughnut',
+            data: {
+                labels: ['Corpus Needed', 'Current Corpus'],
+                datasets: [{
+                    data: [80, 20],
+                    backgroundColor: ['#f43f5e', '#6366f1'], // Rose-500, Primary
+                    borderWidth: 0,
+                    cutout: '75%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+         // ROI Donut Chart
+        const ctxRoi = document.getElementById('roiChart').getContext('2d');
+        new Chart(ctxRoi, {
+            type: 'doughnut',
+            data: {
+                labels: ['Inv', 'Profit'],
+                datasets: [{
+                    data: [85, 15],
+                    backgroundColor: ['#334155', '#10b981'], // Slate-700, Emerald-500
+                    borderWidth: 0,
+                    cutout: '70%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+    </script>
+
+</body></html>

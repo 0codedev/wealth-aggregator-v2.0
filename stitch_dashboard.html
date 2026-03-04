@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WealthAgg Mobile Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#6366f1", // Indigo-500 for primary accents
+              "background-light": "#f8fafc", // Slate-50
+              "background-dark": "#020617", // Slate-950 as requested
+              "card-dark": "#0f172a", // Slate-900 for cards
+              "card-light": "#ffffff",
+              "text-secondary-dark": "#94a3b8", // Slate-400
+              "text-secondary-light": "#64748b", // Slate-500
+              "accent-green": "#10b981", // Emerald-500
+              "accent-red": "#ef4444", // Red-500
+              "accent-purple": "#8b5cf6", // Violet-500
+              "accent-orange": "#f97316", // Orange-500
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+            },
+            backgroundImage: {
+                'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+            }
+          },
+        },
+      };
+    </script>
+<style>.scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glow-purple {
+            box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.3);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen antialiased">
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-icons-outlined text-xl">grid_view</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight">Dashboard</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-icons-outlined text-slate-600 dark:text-slate-400">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-accent-red rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent-purple overflow-hidden border border-slate-200 dark:border-slate-700">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGaeZdWtat1fl-yKyPuaTvda5fS_tVNQOUMVQEe_-xFPPUZQprQM6SWHg7brqxz9Y5mQAuFrulMIo392S-pFTPB5JYuW-2UXceF7Diul6wz-sT2KYyLLhnrq_YQrFTYC8lw86AO6q9fDBr0SiggrjQGNCLDNdPYJei9EZPCLjBka2PLPhjpcyKu78t3xFSDzQu91WtxEtzOL_5FM2E9AhKrB8WODkHDC8_uLHcio28EgUdF9h-RpABWzGVLmGH6c8RqakO5MU5eovl"/>
+</div>
+</div>
+</header>
+<main class="px-4 py-6 space-y-6 max-w-lg mx-auto">
+<div class="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+<div class="flex-none bg-card-light dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 flex items-center gap-2 text-xs w-auto whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-slate-500"></span>
+<span class="text-text-secondary-light dark:text-text-secondary-dark font-medium">MARKET CLOSED</span>
+</div>
+<div class="flex-none bg-card-light dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 flex items-center gap-2 text-xs w-auto whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-accent-green animate-pulse"></span>
+<span class="text-text-secondary-light dark:text-text-secondary-dark font-medium">OPTIMAL VIX</span>
+</div>
+</div>
+<section class="bg-card-light dark:bg-card-dark rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+<div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex justify-between items-start mb-2 relative z-10">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-accent-green"></span>
+<span class="text-xs font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Gross Assets</span>
+</div>
+<span class="bg-accent-red/10 text-accent-red text-[10px] font-bold px-2 py-0.5 rounded border border-accent-red/20">-0.78%</span>
+</div>
+<div class="mt-4 mb-6 relative z-10">
+<h2 class="text-4xl font-display font-bold text-slate-900 dark:text-white tracking-tight">₹72,544</h2>
+<div class="flex items-center gap-2 mt-2 text-xs text-text-secondary-light dark:text-text-secondary-dark">
+<span>Net Worth</span>
+<span class="text-slate-900 dark:text-slate-300 font-medium">₹72,544</span>
+</div>
+</div>
+<div class="bg-slate-100 dark:bg-slate-950 p-1 rounded-xl flex relative z-10">
+<button class="flex-1 py-2 text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark rounded-lg hover:text-slate-900 dark:hover:text-white transition-colors">
+                    PAST
+                </button>
+<button class="flex-1 py-2 text-xs font-bold text-white bg-primary shadow-lg shadow-primary/25 rounded-lg flex items-center justify-center gap-1">
+<span class="material-icons-outlined text-[14px]">history</span> TIME TRAVELER
+                </button>
+<button class="flex-1 py-2 text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark rounded-lg hover:text-slate-900 dark:hover:text-white transition-colors">
+                    FUTURE
+                </button>
+</div>
+</section>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-4 border border-slate-200 dark:border-slate-800 relative">
+<div class="flex justify-between items-start mb-3">
+<span class="material-icons-outlined text-primary text-xl">show_chart</span>
+<span class="text-[10px] font-bold text-accent-red bg-accent-red/10 px-1.5 py-0.5 rounded">-9.78%</span>
+</div>
+<p class="text-[10px] font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase mb-1">Total Profit/Loss</p>
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">-₹7,866</h3>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1 mt-3 rounded-full overflow-hidden">
+<div class="bg-accent-red w-1/4 h-full rounded-full"></div>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-start mb-3">
+<span class="material-icons-outlined text-accent-orange text-xl">emoji_events</span>
+<span class="text-[10px] font-bold text-slate-500 bg-slate-500/10 px-1.5 py-0.5 rounded">ALL TIME HIGH</span>
+</div>
+<p class="text-[10px] font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase mb-1">Top Performer</p>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">Trading Wallet (Alpha)</h3>
+<div class="flex items-end justify-between mt-2">
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Return</p>
+<p class="text-lg font-bold text-accent-red">NaN%</p>
+</div>
+<span class="text-[10px] font-medium text-text-secondary-light dark:text-text-secondary-dark bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">High Impact</span>
+</div>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="p-1.5 rounded-lg bg-accent-orange/10 text-accent-orange">
+<span class="material-icons-outlined text-sm">account_balance_wallet</span>
+</span>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase">Tax Alpha</h3>
+</div>
+<span class="text-[10px] font-bold text-accent-orange bg-accent-orange/10 px-2 py-1 rounded border border-accent-orange/20">ACTION REQD</span>
+</div>
+<div class="mb-4">
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mb-1">Recoverable Value</p>
+<div class="flex items-baseline gap-2">
+<p class="text-2xl font-bold text-accent-orange">₹2,001</p>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">+1.2% Boost</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
+                            N
+                        </div>
+<div>
+<p class="text-xs font-semibold text-slate-900 dark:text-white">Nippon Silver ETF</p>
+<p class="text-[10px] text-accent-red">-₹2,104</p>
+</div>
+</div>
+<button class="px-2 py-1 text-[10px] font-bold text-accent-orange border border-accent-orange/30 rounded bg-accent-orange/5 hover:bg-accent-orange/10 transition-colors">Harvest</button>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
+                            G
+                        </div>
+<div>
+<p class="text-xs font-semibold text-slate-900 dark:text-white">Nippon Gold ETF</p>
+<p class="text-[10px] text-accent-red">-₹1,485</p>
+</div>
+</div>
+<button class="px-2 py-1 text-[10px] font-bold text-accent-orange border border-accent-orange/30 rounded bg-accent-orange/5 hover:bg-accent-orange/10 transition-colors">Harvest</button>
+</div>
+</div>
+<button class="w-full mt-4 text-[10px] text-text-secondary-light dark:text-text-secondary-dark hover:text-white transition-colors flex items-center justify-center gap-1">
+                View 1 more missions <span class="material-icons-outlined text-[10px]">expand_more</span>
+</button>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="p-1.5 rounded-lg bg-accent-red/10 text-accent-red">
+<span class="material-icons-outlined text-sm">gavel</span>
+</span>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase">Active Liability</h3>
+</div>
+<span class="text-[10px] font-bold text-accent-red bg-accent-red/10 px-2 py-1 rounded border border-accent-red/20">7.4% APR</span>
+</div>
+<div class="mb-4">
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mb-1">Outstanding Principal</p>
+<p class="text-2xl font-bold text-accent-red">-₹4,01,283</p>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-800 pt-3">
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase mb-1">You Bleed</p>
+<p class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1">
+<span class="material-icons-outlined text-xs text-accent-red">water_drop</span> ₹81.36 <span class="text-[10px] font-normal text-text-secondary-light dark:text-text-secondary-dark">/ day</span>
+</p>
+</div>
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase mb-1">Interest Cost</p>
+<p class="text-sm font-bold text-accent-red">+₹48.12M <span class="text-[10px] font-normal text-text-secondary-light dark:text-text-secondary-dark">since session</span></p>
+</div>
+</div>
+</div>
+<div>
+<div class="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
+<div class="snap-start flex-none w-[140px] bg-card-light dark:bg-card-dark p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-[120px] group hover:border-primary transition-colors cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="p-1.5 bg-accent-green/10 text-accent-green rounded-lg">
+<span class="material-icons-outlined text-lg">payments</span>
+</span>
+<span class="material-icons-outlined text-slate-400 group-hover:text-primary transition-colors text-sm">arrow_forward</span>
+</div>
+<div>
+<h4 class="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-1">Spending Analytics</h4>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Track expenses</p>
+</div>
+</div>
+<div class="snap-start flex-none w-[140px] bg-card-light dark:bg-card-dark p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-[120px] group hover:border-primary transition-colors cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="p-1.5 bg-accent-orange/10 text-accent-orange rounded-lg">
+<span class="material-icons-outlined text-lg">insights</span>
+</span>
+<span class="material-icons-outlined text-slate-400 group-hover:text-primary transition-colors text-sm">arrow_forward</span>
+</div>
+<div>
+<h4 class="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-1">Market Insights</h4>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Trends &amp; Sentiment</p>
+</div>
+</div>
+<div class="snap-start flex-none w-[140px] bg-card-light dark:bg-card-dark p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-[120px] group hover:border-primary transition-colors cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="p-1.5 bg-primary/10 text-primary rounded-lg">
+<span class="material-icons-outlined text-lg">people</span>
+</span>
+<span class="material-icons-outlined text-slate-400 group-hover:text-primary transition-colors text-sm">arrow_forward</span>
+</div>
+<div>
+<h4 class="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-1">Community</h4>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Connect with others</p>
+</div>
+</div>
+</div>
+</div>
+<section class="bg-card-light dark:bg-card-dark rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-2">
+<span class="p-1.5 rounded-lg bg-accent-orange/10 text-accent-orange">
+<span class="material-icons-outlined text-sm">local_fire_department</span>
+</span>
+<div>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase leading-none">Fire Control</h3>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Freedom Flight Deck</p>
+</div>
+</div>
+<span class="text-[10px] font-bold text-accent-red bg-accent-red/10 px-2 py-1 rounded border border-accent-red/20">+ DEVIATION</span>
+</div>
+<div class="flex items-center justify-between gap-6 mb-6">
+<div class="relative w-24 h-24 flex items-center justify-center flex-none">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-slate-200 dark:text-slate-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-accent-orange" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="0.5, 100" stroke-width="3"></path>
+</svg>
+<div class="absolute text-center">
+<span class="text-xl font-bold text-accent-orange">0.5%</span>
+<p class="text-[8px] text-text-secondary-light dark:text-text-secondary-dark uppercase">Freedom</p>
+</div>
+</div>
+<div class="flex-1 space-y-4">
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase mb-1">Target Corpus</p>
+<p class="text-lg font-bold text-accent-orange">₹1.50Cr</p>
+</div>
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase mb-1">Est. Freedom Date</p>
+<p class="text-sm font-bold text-slate-900 dark:text-white">16 Years <span class="text-[10px] font-normal text-text-secondary-light dark:text-text-secondary-dark px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Age: 45</span></p>
+</div>
+</div>
+</div>
+<div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase font-semibold">
+<span>Monthly Expenses</span>
+<span>55k/Mo</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent-orange" max="100" min="0" type="range" value="30"/>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase font-semibold">
+<span>Safe Withdrawal Rate</span>
+<span>4%</span>
+</div>
+<input class="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent-green" max="100" min="0" type="range" value="45"/>
+</div>
+</div>
+</section>
+<section class="bg-gradient-to-b from-indigo-900/40 to-slate-900/40 dark:from-indigo-950/40 dark:to-slate-950/40 rounded-2xl p-5 border border-primary/30 dark:border-primary/20 glow-purple relative overflow-hidden">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-white text-xs">
+<span class="material-icons-outlined text-sm">psychology</span>
+</span>
+<h3 class="text-sm font-bold text-primary dark:text-indigo-400">F.I.N.N</h3>
+<span class="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[8px] font-bold border border-primary/30">BETA</span>
+</div>
+<span class="material-icons-outlined text-primary/50 text-sm">auto_awesome</span>
+</div>
+<div class="bg-slate-900/60 dark:bg-black/40 rounded-xl p-3 border border-primary/20 mb-4">
+<div class="flex gap-3">
+<div class="w-1 bg-primary h-auto rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+<p class="text-xs text-indigo-100/90 leading-relaxed font-mono">
+                            I am F.I.N.N (Financial Intelligence Neural Network). I can simulate scenarios, audit your spending, or optimize your tax strategy. Ready when you are.
+                        </p>
+</div>
+</div>
+<div class="flex gap-2 overflow-x-auto scrollbar-hide mb-3 pb-1">
+<span class="flex-none px-2 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-300 hover:bg-indigo-500/20 transition-colors cursor-pointer flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">trending_up</span> Portfolio Health
+                    </span>
+<span class="flex-none px-2 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-300 hover:bg-indigo-500/20 transition-colors cursor-pointer flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">savings</span> Saving Opps
+                    </span>
+<span class="flex-none px-2 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-300 hover:bg-indigo-500/20 transition-colors cursor-pointer flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">flag</span> Goals
+                    </span>
+</div>
+<div class="relative">
+<input class="w-full bg-slate-900 dark:bg-slate-900 border border-slate-700 dark:border-slate-800 rounded-lg py-2.5 pl-4 pr-10 text-sm text-white placeholder-slate-500 focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Ask F.I.N.N..." type="text"/>
+<button class="absolute right-2 top-2 p-0.5 text-primary hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">send</span>
+</button>
+</div>
+</div>
+</section>
+<section class="bg-card-light dark:bg-card-dark rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="material-icons-outlined text-accent-purple">rocket_launch</span>
+<div>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase">Project SL</h3>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wide">Gross Asset Track</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Current Status</p>
+<p class="text-lg font-bold text-white">14.5%</p>
+</div>
+</div>
+<div class="relative h-2 bg-slate-200 dark:bg-slate-800 rounded-full mb-6">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-accent-purple w-[14.5%] rounded-full shadow-[0_0_10px_rgba(139,92,246,0.5)]"></div>
+<div class="absolute top-3 left-[14.5%] -translate-x-1/2 flex flex-col items-center">
+<div class="w-0.5 h-2 bg-slate-600 mb-1"></div>
+<span class="text-[8px] px-1 py-0.5 bg-slate-800 rounded text-slate-300 border border-slate-700">1L</span>
+</div>
+<div class="absolute top-3 left-[50%] -translate-x-1/2 flex flex-col items-center opacity-50">
+<div class="w-0.5 h-2 bg-slate-600 mb-1"></div>
+<span class="text-[8px] px-1 py-0.5 bg-slate-800 rounded text-slate-300 border border-slate-700">5L</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50">
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">track_changes</span> Target Goal
+                     </p>
+<p class="text-sm font-bold text-slate-900 dark:text-white mt-1">₹5.0L</p>
+</div>
+<div>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark uppercase flex items-center gap-1">
+<span class="material-icons-outlined text-[10px]">hourglass_empty</span> Est. Completion
+                     </p>
+<p class="text-sm font-bold text-slate-900 dark:text-white mt-1">1 Yrs 3 Mos</p>
+</div>
+</div>
+<div class="flex justify-between items-center mt-3 text-[10px]">
+<span class="text-text-secondary-light dark:text-text-secondary-dark">Next: <strong class="text-slate-900 dark:text-white">1L</strong></span>
+<span class="text-text-secondary-light dark:text-text-secondary-dark">₹27,456.21 to go</span>
+</div>
+</section>
+<section class="space-y-3">
+<div class="flex justify-between items-center px-1">
+<div class="flex items-center gap-2">
+<span class="material-icons-outlined text-accent-orange">notifications_active</span>
+<div>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Alerts Engine 2.0</h3>
+<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Create triggers &amp; alerts</p>
+</div>
+</div>
+<button class="bg-accent-orange text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg shadow-accent-orange/20">
+<span class="material-icons-outlined text-sm">add</span> Add
+                </button>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-1 border border-slate-200 dark:border-slate-800">
+<div class="grid grid-cols-3 gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+<button class="py-1.5 text-[10px] font-bold text-slate-900 bg-accent-orange rounded-lg shadow-sm flex items-center justify-center gap-1">
+<span class="material-icons-outlined text-[12px]">notifications</span> Alerts
+                    </button>
+<button class="py-1.5 text-[10px] font-medium text-text-secondary-light dark:text-text-secondary-dark hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1">
+<span class="material-icons-outlined text-[12px]">dashboard</span> Templates
+                    </button>
+<button class="py-1.5 text-[10px] font-medium text-text-secondary-light dark:text-text-secondary-dark hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1">
+<span class="material-icons-outlined text-[12px]">analytics</span> Analytics
+                    </button>
+</div>
+<div class="flex flex-col items-center justify-center py-10 px-4 text-center">
+<div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+<span class="material-icons-outlined text-slate-400 text-xl">notifications_off</span>
+</div>
+<p class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">No alerts configured yet.</p>
+<p class="text-[10px] text-slate-400 dark:text-slate-600">Use templates or click "Add" to get started.</p>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase">Asset Allocation</h3>
+<span class="material-icons-outlined text-slate-500 text-sm">pie_chart</span>
+</div>
+<div class="flex items-center justify-center py-4">
+<div class="relative w-32 h-32">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-indigo-900/20" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="60, 100" stroke-width="4"></path>
+<path class="text-accent-purple" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="25, 100" stroke-dashoffset="-60" stroke-width="4"></path>
+<path class="text-accent-red" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="15, 100" stroke-dashoffset="-85" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-icons-outlined text-slate-600 dark:text-slate-400">donut_large</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase">Platform Diversification</h3>
+<p class="text-[8px] text-text-secondary-light dark:text-text-secondary-dark uppercase">Risk Concentration</p>
+</div>
+<span class="material-icons-outlined text-slate-500 text-sm">layers</span>
+</div>
+<div class="space-y-3 mt-4">
+<div class="flex items-center gap-2">
+<span class="w-10 text-[10px] text-text-secondary-light dark:text-text-secondary-dark text-right">Dhan</span>
+<div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[70%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-10 text-[10px] text-text-secondary-light dark:text-text-secondary-dark text-right">Gullak</span>
+<div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-accent-purple w-[20%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-10 text-[10px] text-text-secondary-light dark:text-text-secondary-dark text-right">Jar</span>
+<div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-accent-green w-[5%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+<span class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark">Top Concentration</span>
+<span class="text-[10px] font-bold text-slate-900 dark:text-white">Dhan (undefined%)</span>
+</div>
+</div>
+</div>
+<div class="h-20"></div>
+</main>
+<div class="fixed bottom-6 right-6 z-50">
+<button class="w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-600/40 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 border-2 border-indigo-400">
+<span class="material-icons-outlined text-2xl">mic</span>
+</button>
+</div>
+
+</body></html>

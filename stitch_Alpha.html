@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alpha Predator Engine Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366f1", // Indigo-500 equivalent for the screenshot's primary purple/blue
+                        "background-light": "#f8fafc", // Slate-50
+                        "background-dark": "#0f172a", // Slate-900 (Deep dark blue)
+                        "surface-dark": "#1e293b", // Slate-800 for cards
+                        "surface-light": "#ffffff", // White for light mode cards
+                        "accent-green": "#10b981", // Emerald-500
+                        "accent-red": "#ef4444", // Red-500
+                        "accent-blue": "#3b82f6", // Blue-500
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem", // 12px
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pulse-dot {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-sans text-slate-800 dark:text-slate-100 min-h-screen pb-24">
+<header class="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-4">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-2">
+<span class="material-icons-round text-primary text-2xl">radar</span>
+<h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white uppercase">
+                    Alpha Predator <span class="text-primary">Engine</span>
+</h1>
+</div>
+<div class="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+<div class="w-2 h-2 rounded-full bg-accent-green pulse-dot"></div>
+<span class="text-[10px] font-semibold text-accent-green tracking-wide">ONLINE</span>
+</div>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Real-time surveillance of market anomalies.</p>
+</header>
+<nav class="sticky top-[85px] z-40 bg-background-light dark:bg-background-dark pt-4 pb-2 px-4 overflow-x-auto scrollbar-hide flex space-x-3">
+<button class="flex-none px-4 py-2 rounded-full bg-primary text-white text-sm font-medium shadow-lg shadow-primary/20 transition-transform active:scale-95">
+            Insider Radar
+        </button>
+<button class="flex-none px-4 py-2 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+            Bulk Deal Scanner
+        </button>
+<button class="flex-none px-4 py-2 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+            Tax Harvester
+        </button>
+</nav>
+<main class="px-4 space-y-6 mt-4">
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-base font-semibold flex items-center gap-2">
+<span class="material-icons-round text-primary text-lg">person_search</span>
+                    Insider Radar
+                </h2>
+<span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase tracking-wider">Tracking Promoter Activity</span>
+</div>
+<div class="space-y-3">
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full -mr-4 -mt-4 transition-all group-hover:scale-110"></div>
+<div class="flex justify-between items-start mb-3">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-bold text-lg">RELIANCE</h3>
+<span class="bg-accent-green/20 text-accent-green text-[10px] font-bold px-1.5 py-0.5 rounded">BUY</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Mukesh Ambani <span class="opacity-50">• Promoter</span></p>
+</div>
+<div class="text-right">
+<span class="text-[10px] text-slate-400 flex items-center justify-end gap-1">
+<span class="material-icons-round text-[12px]">schedule</span> 2 mins ago
+                            </span>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-slate-100 dark:border-slate-700 pt-3 mt-1">
+<div>
+<span class="text-[10px] uppercase text-slate-400 tracking-wider">Transaction Value</span>
+<div class="font-mono font-semibold text-lg">₹12,25,00,000</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] text-slate-400">Mode</span>
+<div class="text-xs font-medium">Open Market</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl shadow-sm relative overflow-hidden group">
+<div class="flex justify-between items-start mb-3">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-bold text-lg">TATASTEEL</h3>
+<span class="bg-accent-green/20 text-accent-green text-[10px] font-bold px-1.5 py-0.5 rounded">BUY</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">N. Chandrasekaran <span class="opacity-50">• Director</span></p>
+</div>
+<div class="text-right">
+<span class="text-[10px] text-slate-400 flex items-center justify-end gap-1">
+<span class="material-icons-round text-[12px]">schedule</span> 15 mins ago
+                            </span>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-slate-100 dark:border-slate-700 pt-3 mt-1">
+<div>
+<span class="text-[10px] uppercase text-slate-400 tracking-wider">Transaction Value</span>
+<div class="font-mono font-semibold text-lg">₹16,80,000</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] text-slate-400">Mode</span>
+<div class="text-xs font-medium">Open Market</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl shadow-sm relative overflow-hidden group">
+<div class="flex justify-between items-start mb-3">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-bold text-lg">INFY</h3>
+<span class="bg-accent-red/20 text-accent-red text-[10px] font-bold px-1.5 py-0.5 rounded">SELL</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Salil Parekh <span class="opacity-50">• CEO</span></p>
+</div>
+<div class="text-right">
+<span class="text-[10px] text-slate-400 flex items-center justify-end gap-1">
+<span class="material-icons-round text-[12px]">schedule</span> 1 hr ago
+                            </span>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-slate-100 dark:border-slate-700 pt-3 mt-1">
+<div>
+<span class="text-[10px] uppercase text-slate-400 tracking-wider">Transaction Value</span>
+<div class="font-mono font-semibold text-lg">₹72,50,000</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] text-slate-400">Mode</span>
+<div class="text-xs font-medium">ESOP</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-slate-200 dark:border-slate-800 my-6"/>
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-base font-semibold flex items-center gap-2">
+<span class="material-icons-round text-yellow-500 text-lg">bar_chart</span>
+                    Bulk Deal Scanner
+                </h2>
+<span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded uppercase tracking-wider">Smart Money</span>
+</div>
+<div class="space-y-3">
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl shadow-sm">
+<div class="flex justify-between items-start">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-bold text-lg">ZOMATO</h3>
+<span class="bg-accent-red/10 text-accent-red text-[10px] font-bold px-1.5 py-0.5 rounded">-1.2%</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Tiger Global</p>
+</div>
+<div class="text-right">
+<div class="text-[10px] font-bold text-accent-red mb-0.5">SELL</div>
+<div class="font-mono font-semibold text-base">₹87,75,00,000</div>
+<div class="text-[10px] text-slate-400">@ ₹58.5 / share</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl shadow-sm">
+<div class="flex justify-between items-start">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-bold text-lg">PAYTM</h3>
+<span class="bg-accent-red/10 text-accent-red text-[10px] font-bold px-1.5 py-0.5 rounded">-4.5%</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Softbank Vision Fund</p>
+</div>
+<div class="text-right">
+<div class="text-[10px] font-bold text-accent-red mb-0.5">SELL</div>
+<div class="font-mono font-semibold text-base">₹1,70,00,000</div>
+<div class="text-[10px] text-slate-400">@ ₹850 / share</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-slate-200 dark:border-slate-800 my-6"/>
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-base font-semibold flex items-center gap-2">
+<span class="material-icons-round text-accent-red text-lg">calculate</span>
+                    Tax Harvester
+                </h2>
+<span class="text-[10px] font-bold text-accent-red bg-accent-red/10 px-2 py-0.5 rounded uppercase tracking-wider">FY End Optimizer</span>
+</div>
+<div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-5 text-white relative shadow-lg overflow-hidden border border-slate-700/50">
+<span class="material-icons-round absolute top-[-10px] right-[-10px] text-8xl text-white/5 pointer-events-none">balance</span>
+<div class="grid grid-cols-2 gap-4 mb-6 relative z-10">
+<div>
+<p class="text-[10px] uppercase text-slate-400 mb-1">Harvestable Loss</p>
+<p class="text-2xl font-bold font-mono text-accent-red">₹16,008</p>
+</div>
+<div>
+<p class="text-[10px] uppercase text-slate-400 mb-1">Tax Savings (Est)</p>
+<p class="text-2xl font-bold font-mono text-accent-green">₹2,401</p>
+</div>
+</div>
+<div class="space-y-3 relative z-10">
+<div class="flex justify-between items-center text-xs py-2 border-b border-white/10">
+<div>
+<span class="block font-medium">Nippon Silver ETF</span>
+<span class="text-[10px] text-slate-400">Invested: ₹47,034</span>
+</div>
+<div class="text-right">
+<span class="block text-accent-red font-mono">-₹13,365</span>
+<span class="text-[10px] text-accent-red bg-accent-red/10 px-1 rounded">-28.41%</span>
+</div>
+</div>
+<div class="flex justify-between items-center text-xs py-2 border-b border-white/10">
+<div>
+<span class="block font-medium">Nippon Gold ETF</span>
+<span class="text-[10px] text-slate-400">Invested: ₹18,885</span>
+</div>
+<div class="text-right">
+<span class="block text-accent-red font-mono">-₹1,685</span>
+<span class="text-[10px] text-accent-red bg-accent-red/10 px-1 rounded">-8.92%</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 bg-accent-red hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-red-900/20 flex items-center justify-center gap-2 transition-colors relative z-10">
+<span class="material-icons-round text-sm">content_cut</span>
+                    Generate Harvesting Report
+                </button>
+</div>
+</section>
+</main>
+<div class="fixed bottom-20 left-4 right-4 z-40">
+<div class="bg-yellow-900/90 dark:bg-yellow-900/40 backdrop-blur-md border border-yellow-700/50 p-3 rounded-lg shadow-xl flex items-start gap-3 animate-slide-up">
+<div class="bg-yellow-500/20 p-1.5 rounded-full flex-shrink-0 mt-0.5">
+<span class="material-icons-round text-yellow-500 text-sm">bolt</span>
+</div>
+<div>
+<p class="text-[10px] uppercase text-yellow-500 font-bold mb-0.5">AI Insight</p>
+<p class="text-xs text-yellow-100 leading-relaxed">
+                    Institutional Buying in <strong class="text-white">SUZLON</strong> correlates with the recent breakout. Watch for a retest of 18.0 levels.
+                </p>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 w-full bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-16">
+<div class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round text-2xl">dashboard</span>
+<span class="text-[10px]">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons-round text-2xl">rocket_launch</span>
+<span class="text-[10px] font-medium">Engine</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round text-2xl">account_balance_wallet</span>
+<span class="text-[10px]">Portfolio</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons-round text-2xl">settings</span>
+<span class="text-[10px]">Settings</span>
+</div>
+</div>
+
+</body></html>
